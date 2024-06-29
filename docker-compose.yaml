@@ -1,0 +1,36 @@
+version: '3'
+services:
+    ingress:
+        image: nginx:stable-alpine
+        ports: 
+            - "8080:80"
+        links:
+            - api
+        volumes: 
+            - ./etc/nginx:/etc/nginx/conf.d
+            - ./data/ingress:/data/
+
+    api:
+        # image: tiangolo/uvicorn-gunicorn-fastapi:python3.8
+        build: ./backend
+        expose:
+            - 80
+        environment:
+            - RUN_ENV=DEVELOPMENT
+        volumes:
+            - ./backend:/app
+            - ./data/backend:/data
+            - ./data/backend:/app/data
+        working_dir: /app
+
+    minio: 
+        image: quay.io/minio/minio
+        ports:
+            - "9000:9000"
+            - "9001:9001"
+        environment: 
+            - MINIO_ROOT_USER=minio
+            - MINIO_ROOT_PASSWORD=minioByDeverhood
+        command: server /data --console-address ":9001"
+        volumes:
+            - ./minio/data:/data
