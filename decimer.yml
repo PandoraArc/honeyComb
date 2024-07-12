@@ -1,0 +1,12 @@
+name: decimer
+channels:
+  - conda-forge
+dependencies:
+  - python=3.10
+  - pip
+  - poppler
+  - pip:
+    - opencv-python-headless
+    - decimer-segmentation
+    - git+https://github.com/Iagea/DECIMER-Image-Classifier
+    - git+https://github.com/Kohulan/DECIMER-Image_Transformer.git
