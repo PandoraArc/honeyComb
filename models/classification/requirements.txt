@@ -1,0 +1,5 @@
+ipyplot
+matplotlib
+pillow>=8.2.0
+attrs>=19.2.0
+tensorflow==2.13.1
