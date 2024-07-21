@@ -15,7 +15,7 @@ class DecimerImageClassifier:
         for gpu in gpus:
             tf.config.experimental.set_memory_growth(gpu, True)
         # Load model
-        model_path = "./model"
+        model_path = os.path.join(os.path.split(__file__)[0], "model")
         print('model_path:', model_path)
         self.model = keras.models.load_model(model_path)
 
