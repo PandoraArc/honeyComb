@@ -7,3 +7,8 @@
 
 /minio/data
 /data
+
+models/classification/decimer_image_classifier/__pycache__/
+models/segmentation/decimer_segmentation/__pycache__/
+models/segmentation/decimer_segmentation/mrcnn/__pycache__
+/models/tranformation/decimer_transformation/__pycache__/
