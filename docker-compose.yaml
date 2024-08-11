@@ -23,6 +23,16 @@ services:
             - ./data/backend:/app/data
         working_dir: /app
 
+    cls:
+        build: ./models/classification
+        expose:
+            - 80
+        volumes:
+            - ./models/classification/app:/home/app
+            - ./data/models/classification:/home/data
+            - ./data/models/classification:/home/app/data
+        working_dir: /home
+
     minio: 
         image: quay.io/minio/minio
         ports:

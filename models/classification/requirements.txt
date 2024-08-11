@@ -2,4 +2,7 @@ ipyplot
 matplotlib
 pillow>=8.2.0
 attrs>=19.2.0
-tensorflow==2.13.1
+fastapi==0.112.0
+python-multipart==0.0.9
+uvicorn==0.30.5
+minio==7.2.7

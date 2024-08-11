@@ -1,7 +1,7 @@
 from fastapi import FastAPI, Request
 
-ROOT_PATH = "/api/"
-DOCS_PATH = "/docs/"
+ROOT_PATH = "/api"
+DOCS_PATH = "/docs"
 
 app = FastAPI(
     title="Honeycomb Service",

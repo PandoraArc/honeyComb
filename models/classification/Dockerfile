@@ -1,8 +1,4 @@
-# with out gpu
-# FROM tensorflow/tensorflow:latest
-
-# with gpu
-FROM tensorflow/tensorflow:latest-gpu
+FROM tensorflow/tensorflow:2.13.0
 
 WORKDIR /home
 
@@ -19,4 +15,4 @@ RUN pip install -r requirements.txt
 # ENTRYPOINT ["conda", "run", "-n", "decimer", "./run.sh"]
 # ENTRYPOINT ["conda", "run", "-n", "decimer", "./run.sh"]
 
-
+CMD ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "80", "--reload"]
