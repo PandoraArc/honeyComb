@@ -16,38 +16,65 @@ for gpu in gpus:
 
 
 def main():
-    Smiles_Path = "Path_to_file"
-    # Images_Path = "Train_Images/"
+    Smiles_Path = "train_data/decimal_results.csv"
+    
+    # Images_Path = "example_data/DECIMER_test_1.png"
 
-    img_name_vector, cap_vector, tokenizer, max_length, img_name_val = data_loader(
-        Smiles_Path
-    )
+    img_name_vector, cap_vector, tokenizer, max_length, img_name_val = data_loader(Smiles_Path)
 
     print("Tokens: ", tokenizer, flush=True)
     print("Max length of attention weights: ", max_length, flush=True)
     print("Total train files:", len(img_name_vector), flush=True)
 
-    with open("tokenizer_TPU_Stereo.pkl", "wb") as file:
+    with open("pkl/tokenizer_TPU_Stereo.pkl", "wb") as file:
         pickle.dump(tokenizer, file)
 
-    with open("max_length_TPU_Stereo.pkl", "wb") as file:
+    with open("pkl/max_length_TPU_Stereo.pkl", "wb") as file:
         pickle.dump(max_length, file)
 
+    # start = 0
+    # end = 2
+    # start_x = 0
+
+    #BATCH
+    # for i in range(int(len(img_name_vector) / end)):
+    #     imgs_path = img_name_vector[start : (start + end)]
+    #     caps_path = cap_vector[start : (start + end)]
+
+    #     with open(
+    #         "Images_Path_" + str(start_x) + "_" + str(start_x) + ".pkl", "wb"
+    #     ) as file:
+    #         pickle.dump(imgs_path, file)
+
+    #     with open(
+    #         "Capts_Path_" + str(start_x) + "_" + str(start_x) + ".pkl", "wb"
+    #     ) as file:
+    #         pickle.dump(caps_path, file)
+
+    #     print("Total Train_Images: ", len(imgs_path), flush=True)
+    #     print("Total SELFIES_Images: ", len(caps_path), flush=True)
+
+    #     start = start + len(imgs_path)
+    #     start_x = start_x + 1
+
     start = 0
-    end = 26800
+    end = 2
     start_x = 0
 
     for i in range(int(len(img_name_vector) / end)):
+
         imgs_path = img_name_vector[start : (start + end)]
         caps_path = cap_vector[start : (start + end)]
 
+
+        
         with open(
-            "Images_Path_" + str(start_x) + "_" + str(start_x) + ".pkl", "wb"
+            "pkl/Images_" + str(start_x) + "_" + str(start_x) + ".pkl", "wb"
         ) as file:
             pickle.dump(imgs_path, file)
 
         with open(
-            "Capts_Path_" + str(start_x) + "_" + str(start_x) + ".pkl", "wb"
+            "pkl/Capts_" + str(start_x) + "_" + str(start_x) + ".pkl", "wb"
         ) as file:
             pickle.dump(caps_path, file)
 
@@ -56,6 +83,28 @@ def main():
 
         start = start + len(imgs_path)
         start_x = start_x + 1
+
+
+    # #try single pic
+    # for i in range(int(len(img_name_vector))):
+    #     imgs_path = img_name_vector[start_x]
+    #     caps_path = cap_vector[start_x]
+
+    #     with open(
+    #         "pkl/Images" + str(start_x) + "_" + str(start_x) + ".pkl", "wb"
+    #     ) as file:
+    #         pickle.dump(imgs_path, file)
+
+    #     with open(
+    #         "pkl/Capts" + str(start_x) + "_" + str(start_x) + ".pkl", "wb"
+    #     ) as file:
+    #         pickle.dump(caps_path, file)
+
+    #     print("Total Train_Images: ", len(imgs_path), flush=True)
+    #     print("Total SELFIES_Images: ", len(caps_path), flush=True)
+
+    #     start = start + len(imgs_path)
+    #     start_x = start_x + 1
 
     print(datetime.now().strftime("%Y/%m/%d %H:%M:%S"), "Process completed", flush=True)
 
@@ -72,6 +121,11 @@ def data_loader(Smiles_Path):
     for line in smiles.split("\n"):
         # Split the ID and SMILES to separate tokens
         tokens = line.split(",")
+        
+        # Check if tokens have at least 2 elements (ID and SMILES)
+        if len(tokens) < 2:
+            continue  # Skip lines that don't have both an ID and a SMILES string
+    
 
         image_id = str(tokens[0]) + ".png"
         # Add start and end annotations to SMILES string
@@ -83,7 +137,7 @@ def data_loader(Smiles_Path):
             print(e, flush=True)
 
         # PATH of training images
-        full_image_path = "Images_Path_/" + image_id
+        full_image_path = "train_data/" + image_id
 
         all_img_name.append(full_image_path)
         all_smiles.append(SMILES_)
@@ -115,12 +169,21 @@ def data_loader(Smiles_Path):
     # calculating the max_length used to store the attention weights
     max_length = calc_max_length(train_seqs)
 
-    img_name_train, img_name_val, cap_train, cap_val = (
-        img_name_vector[0:1340000],
-        img_name_vector[1340000:1440000],
-        cap_vector[0:1340000],
-        cap_vector[1340000:1440000],
-    )
+    # img_name_train, img_name_val, cap_train, cap_val = (
+    #     img_name_vector[0:1340000],
+    #     img_name_vector[1340000:1440000],
+    #     cap_vector[0:1340000],
+    #     cap_vector[1340000:1440000],
+    # )
+    
+    #9:1 train:validation
+    total_images = len(train_captions)
+    split_index = int(0.9 * total_images)  
+    img_name_train = img_name_vector[:split_index]  
+    img_name_val = img_name_vector[split_index:]    
+    cap_train = cap_vector[:split_index] 
+    cap_val = cap_vector[split_index:]    
+
 
     print(
         str(len(img_name_train)),
