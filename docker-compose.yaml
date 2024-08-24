@@ -40,7 +40,7 @@ services:
             - "9001:9001"
         environment: 
             - MINIO_ROOT_USER=minio
-            - MINIO_ROOT_PASSWORD=minioByDeverhood
+            - MINIO_ROOT_PASSWORD=minioHoneycomb
         command: server /data --console-address ":9001"
         volumes:
             - ./minio/data:/data
