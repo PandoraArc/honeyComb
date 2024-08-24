@@ -12,8 +12,8 @@ from PIL import Image
 from PIL import ImageEnhance
 from pillow_heif import register_heif_opener
 
-import DECIMER.Efficient_Net_encoder as Efficient_Net_encoder
-import DECIMER.Transformer_decoder as Transformer_decoder
+import Efficient_Net_encoder as Efficient_Net_encoder
+import Transformer_decoder as Transformer_decoder
 
 
 TARGET_DTYPE = tf.float32
@@ -309,6 +309,7 @@ class CustomSchedule(tf.keras.optimizers.schedules.LearningRateSchedule):
         self.warmup_steps = warmup_steps
 
     def __call__(self, step):
+        step = tf.cast(step, tf.float32)
         arg1 = tf.math.rsqrt(step)
         arg2 = step * (self.warmup_steps**-1.5)
 
