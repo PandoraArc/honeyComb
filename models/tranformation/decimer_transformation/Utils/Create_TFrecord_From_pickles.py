@@ -18,18 +18,20 @@ gpus = tf.config.experimental.list_physical_devices("GPU")
 for gpu in gpus:
     tf.config.experimental.set_memory_growth(gpu, True)
 
+
 for file_in in args.file:
 
     def main():
         train_captions = pickle.load(
-            open("Capts_Path_" + file_in + "_" + file_in + ".pkl", "rb")
+            open("pkl/Capts_" + file_in + "_" + file_in + ".pkl", "rb")
         )
         img_name_vector = pickle.load(
-            open("Images_Path_" + file_in + "_" + file_in + ".pkl", "rb")
+            open("pkl/Images_" + file_in + "_" + file_in + ".pkl", "rb")
         )
 
         print("Total number of selected SMILES Strings: ", len(train_captions), "\n")
-        num_shards = int(len(train_captions) / 128)  # corresponds to total train files
+        # num_shards = int(len(train_captions) / 128)  # corresponds to total train files
+        num_shards = 1
 
         file_index = num_shards * int(file_in)
 
