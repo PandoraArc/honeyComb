@@ -1,9 +1,9 @@
 # EfficientNet-V2 config
 import tensorflow as tf
 
-import DECIMER.efficientnetv2
-from DECIMER.efficientnetv2 import effnetv2_configs
-from DECIMER.efficientnetv2 import effnetv2_model
+import efficientnetv2
+from efficientnetv2 import effnetv2_configs
+from efficientnetv2 import effnetv2_model
 
 BATCH_SIZE_DEBUG = 2
 MODEL = "efficientnetv2-m"  # @param
@@ -41,6 +41,8 @@ class Encoder(tf.keras.Model):
         super(Encoder, self).__init__()
 
         self.image_embedding_dim = image_embedding_dim
+        print(self.image_embedding_dim)
+        
         self.preprocessing_fn = preprocessing_fn
         self.encoder_backbone = backbone_fn(
             model_name=MODEL,
@@ -54,10 +56,18 @@ class Encoder(tf.keras.Model):
         self.include_top = include_top
         self.scale_factor = scale_factor
 
+
     def call(self, x, training):
+        print("before reshape", x.shape)
         x = self.preprocessing_fn(x)
+        print("after preprocessing_fn", x.shape)
         x = self.encoder_backbone(
             x, training=training, features_only=not self.include_top
         )[self.scale_factor]
+        print("after encoder_backbone", x.shape)
+        print(training)
         x = self.reshape(x, training=training)
+        print("after reshape", x.shape)
         return x
+
+

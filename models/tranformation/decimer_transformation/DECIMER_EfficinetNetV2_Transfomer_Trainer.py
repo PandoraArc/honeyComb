@@ -16,12 +16,16 @@ mpl.use("Agg")
 
 # Set TPUs
 
-tpu = tf.distribute.cluster_resolver.TPUClusterResolver(tpu="node-name")
-print("Running on TPU ", tpu.master())
+# tpu = tf.distribute.cluster_resolver.TPUClusterResolver(tpu="node-name")
+# print("Running on TPU ", tpu.master())
 
-tf.config.experimental_connect_to_cluster(tpu)
-tf.tpu.experimental.initialize_tpu_system(tpu)
-strategy = tf.distribute.TPUStrategy(tpu)
+# tf.config.experimental_connect_to_cluster(tpu)
+# tf.tpu.experimental.initialize_tpu_system(tpu)
+# strategy = tf.distribute.TPUStrategy(tpu)
+# strategy = tf.distribute.MirroredStrategy(["GPU:0", "GPU:1"])
+
+
+strategy = tf.distribute.MirroredStrategy(["GPU:0", "GPU:1"])
 
 print("Number of devices: {}".format(strategy.num_replicas_in_sync), flush=True)
 print("REPLICAS: ", strategy.num_replicas_in_sync, flush=True)
@@ -29,35 +33,51 @@ print(datetime.now().strftime("%Y/%m/%d %H:%M:%S"), "Network Started", flush=Tru
 
 # Load the Data
 total_data = 1000000  # datasize integer
+total_data = 100
+ 
+# tokenizer = pickle.load(open("tokenizer_Isomeric_SMILES.pkl", "rb"))
+# max_length = pickle.load(open("max_length_Isomeric_SMILES.pkl", "rb"))
 
-tokenizer = pickle.load(open("tokenizer_Isomeric_SMILES.pkl", "rb"))
-max_length = pickle.load(open("max_length_Isomeric_SMILES.pkl", "rb"))
+tokenizer = pickle.load(open("tokenizer_SMILES.pkl", "rb"))
+max_length = pickle.load(open("max_length.pkl", "rb"))
+
+# tokenizer = pickle.load(open("pkl/tokenizer_TPU_Stereo.pkl", "rb"))
+# max_length = pickle.load(open("pkl/max_length_TPU_Stereo.pkl", "rb"))
 
 PAD_TOKEN = tf.constant(tokenizer.word_index["<pad>"], dtype=tf.int32)
 
 # Image parameters
-IMG_EMB_DIM = (10, 10, 232)
+# IMG_EMB_DIM = (10, 10, 232)
+IMG_EMB_DIM = (10, 10, 800)
 IMG_EMB_DIM = (IMG_EMB_DIM[0] * IMG_EMB_DIM[1], IMG_EMB_DIM[2])
 IMG_SHAPE = (299, 299, 3)
 PE_INPUT = IMG_EMB_DIM[0]
 IMG_SEQ_LEN, IMG_EMB_DEPTH = IMG_EMB_DIM
 D_MODEL = IMG_EMB_DEPTH
 
+
 # Set Training Epochs
 EPOCHS = 40
-REPLICA_BATCH_SIZE = 128
+# REPLICA_BATCH_SIZE = 64
+REPLICA_BATCH_SIZE = 1#reduced
 BATCH_SIZE = REPLICA_BATCH_SIZE * strategy.num_replicas_in_sync
 print(BATCH_SIZE)
 BUFFER_SIZE = 10000
 target_vocab_size = max_length
 TRAIN_STEPS = total_data // BATCH_SIZE
 validation_steps = 15360 // BATCH_SIZE
+validation_steps = 80 // BATCH_SIZE
+
+
+print("target_vocab_size",target_vocab_size, type(target_vocab_size))
+
 
 # Parameters to train the network
 N_LAYERS = 4
+N_LAYERS = 2
 D_MODEL = 512
 D_FF = 2048
-N_HEADS = 8
+N_HEADS = 2
 DROPOUT_RATE = 0.1
 
 # ENCODER_CONFIG
@@ -171,12 +191,12 @@ def get_dataset(batch_size=BATCH_SIZE, buffered_size=BUFFER_SIZE, path=""):
 
 
 train_dataset = strategy.experimental_distribute_dataset(
-    get_dataset(path="gs://tpu-test-koh/DECIMER_V2/RanDepict/*.tfrecord")
+    get_dataset(path="check/*.tfrecord")
 )
 # validation_dataset = strategy.experimental_distribute_dataset(get_dataset(path="gs://tpu-test-koh/DECIMER_V2/RanDepict/Val_data/*.tfrecord"))
 
 
-# validation_dataset = strategy.experimental_distribute_dataset(get_validation_dataset())
+# # validation_dataset = strategy.experimental_distribute_dataset(get_validation_dataset())
 
 training_config = config.Config()
 training_config.initialize_transformer_config(
@@ -185,8 +205,13 @@ training_config.initialize_transformer_config(
     n_transformer_layers=N_LAYERS,
     transformer_d_dff=D_FF,
     transformer_n_heads=N_HEADS,
-    image_embedding_dim=IMG_EMB_DIM,
+    image_embedding_dim=IMG_EMB_DIM[1],
+
 )
+print("image_embedding_dim",IMG_EMB_DIM)
+print("N_HEADS",N_HEADS)
+print("vocab_len", VOCAB_LEN)
+
 training_config.initialize_encoder_config(
     image_embedding_dim=IMG_EMB_DIM,
     preprocessing_fn=PREPROCESSING_FN,
@@ -266,7 +291,7 @@ def prepare_for_training(lr_config, encoder_config, transformer_config, verbose=
         )
 
         # Instantiate the decoder model
-        transformer = Transformer_decoder.Transformer(**transformer_config)
+        transformer = Transformer_decoder.Decoder(**transformer_config)
         transformer(
             initialization_batch,
             tf.random.uniform((REPLICA_BATCH_SIZE, 1)),

@@ -175,11 +175,13 @@ class Decoder(tf.keras.Model):
         super(Decoder, self).__init__()
         self.d_model = d_model
         self.num_layers = num_layers
-
+ 
         self.embedding = tf.keras.layers.Embedding(target_vocab_size, d_model)
         self.pos_encoding_1d = positional_encoding_1d(max_len, d_model)
         self.pos_encoding_2d = positional_encoding_2d(16, 16, self.d_model)
-
+        
+        print("target_vocab_size", target_vocab_size)
+        print("d_model", d_model)
         self.dec_layers = [
             DecoderLayer(d_model, num_heads, dff, max_len, rate)
             for _ in range(num_layers)

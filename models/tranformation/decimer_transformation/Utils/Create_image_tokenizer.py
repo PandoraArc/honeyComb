@@ -32,31 +32,6 @@ def main():
     with open("pkl/max_length_TPU_Stereo.pkl", "wb") as file:
         pickle.dump(max_length, file)
 
-    # start = 0
-    # end = 2
-    # start_x = 0
-
-    #BATCH
-    # for i in range(int(len(img_name_vector) / end)):
-    #     imgs_path = img_name_vector[start : (start + end)]
-    #     caps_path = cap_vector[start : (start + end)]
-
-    #     with open(
-    #         "Images_Path_" + str(start_x) + "_" + str(start_x) + ".pkl", "wb"
-    #     ) as file:
-    #         pickle.dump(imgs_path, file)
-
-    #     with open(
-    #         "Capts_Path_" + str(start_x) + "_" + str(start_x) + ".pkl", "wb"
-    #     ) as file:
-    #         pickle.dump(caps_path, file)
-
-    #     print("Total Train_Images: ", len(imgs_path), flush=True)
-    #     print("Total SELFIES_Images: ", len(caps_path), flush=True)
-
-    #     start = start + len(imgs_path)
-    #     start_x = start_x + 1
-
     start = 0
     end = 2
     start_x = 0

@@ -26,4 +26,7 @@ __all__ = [
 ]
 
 
-from .decimer import predict_SMILES
+# from .decimer import predict_SMILES
+
+from .decimer import predict_SMILES, DECIMER_V2
+from . import config
