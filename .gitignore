@@ -1,5 +1,8 @@
 /backend/app/__pycache__
-/models/classification/app/__pycache__
+/models/classification/app/__pycache__/
+/models/classification/app/minio_manager/__pycache__/
+/mpdels/segmentation/app/__pycache__/
+/models/segmentation/app/minio_manager/__pycache__/
 
 /models/segmentation/app/__pycache__
 /models/segmentation/decimer_segmentation/__pycache__/

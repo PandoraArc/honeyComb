@@ -3,7 +3,7 @@ services:
     ingress:
         image: nginx:stable-alpine
         ports: 
-            - "8080:80"
+            - "12021:80"
         links:
             - api
         volumes: 
@@ -30,14 +30,22 @@ services:
         volumes:
             - ./models/classification/app:/home/app
             - ./data/models/classification:/home/data
-            - ./data/models/classification:/home/app/data
+        working_dir: /home
+
+    seg:
+        build: ./models/segmentation
+        expose:
+            - 80
+        volumes:
+            - ./models/segmentation/app:/home/app
+            - ./data/models/segmentation:/home/data
         working_dir: /home
 
     minio: 
         image: quay.io/minio/minio
         ports:
             - "9000:9000"
-            - "9001:9001"
+            - "12022:9001"
         environment: 
             - MINIO_ROOT_USER=minio
             - MINIO_ROOT_PASSWORD=minioHoneycomb

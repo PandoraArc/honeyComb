@@ -1,5 +1,0 @@
-pdf2image
-opencv-python
-matplotlib
-scikit-image
-tensorflow==2.13.1
