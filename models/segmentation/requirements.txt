@@ -2,7 +2,7 @@ pdf2image
 opencv-python
 matplotlib
 scikit-image
-# tensorflow==2.13.1
+tensorflow==2.13.1
 fastapi==0.95.2
 # fastapi==0.112.0
 pillow>=8.2.0
