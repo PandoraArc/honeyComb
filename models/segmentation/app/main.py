@@ -7,7 +7,8 @@ from datetime import datetime, timezone
 from typing import Optional
 
 import magic
-from fastapi import FastAPI, File, Request, Response, UploadFile, APIRouter
+from decimer_segmentation import segment_chemical_structures
+from fastapi import APIRouter, FastAPI, File, Request, Response, UploadFile
 from fastapi.responses import RedirectResponse
 from PIL import Image
 from starlette.responses import StreamingResponse
@@ -20,9 +21,10 @@ DOCS_PATH = "/seg/api/docs"
 app = FastAPI(
     title="Honeycomb Segmentation Service",
     docs_url=DOCS_PATH,
-    openapi_url=ROOT_PATH+"/openapi.json",
+    openapi_url=ROOT_PATH + "/openapi.json",
 )
 router = APIRouter(prefix=ROOT_PATH)
+
 
 @router.get("/")
 async def root():
@@ -41,5 +43,11 @@ async def about(request: Request):
         "version": "1.0.0",
         "raw_url": str(request.url),
     }
+
+
+@router.post("/")
+async def segmentation(file: UploadFile = File(...)):
+    pass
+
 
 app.include_router(router)

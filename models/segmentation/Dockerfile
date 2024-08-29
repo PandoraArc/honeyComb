@@ -8,7 +8,8 @@ VOLUME /home/data
 # Copy necessary files into the container
 COPY . .
 RUN pip install -r requirements.txt
-RUN apt-get update && apt-get install -y libmagic1
+RUN apt-get update && apt-get install -y libmagic1 libgl1
+
 
 # Set the entry point to run the script using the conda environment
 # ENTRYPOINT ["conda", "run", "-n", "decimer"]
