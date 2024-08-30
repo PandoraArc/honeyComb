@@ -16,7 +16,7 @@
 import functools
 import re
 
-from DECIMER.efficientnetv2 import hparams
+from decimer_transformation.efficientnetv2 import hparams
 
 cfg_register = functools.partial(hparams.register, prefix="cfg:")
 

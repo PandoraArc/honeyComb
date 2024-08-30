@@ -2,7 +2,7 @@ import os
 import re
 import shutil
 
-import DECIMER.config as config
+import decimer_transformation.config as config
 
 pattern = "R([0-9]*)|X([0-9]*)|Y([0-9]*)|Z([0-9]*)"
 add_space_re = "^(\W+)|(\W+)$"

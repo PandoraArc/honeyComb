@@ -8,8 +8,8 @@ from typing import Tuple
 import pystow
 import tensorflow as tf
 
-import DECIMER.config as config
-import DECIMER.utils as utils
+import decimer_transformation.config as config
+import decimer_transformation.utils as utils
 
 # Silence tensorflow model loading warnings.
 logging.getLogger("absl").setLevel("ERROR")

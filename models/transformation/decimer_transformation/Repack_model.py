@@ -5,9 +5,9 @@ from typing import Tuple
 
 import tensorflow as tf
 
-import DECIMER.config as config
-import DECIMER.Efficient_Net_encoder as Efficient_Net_encoder
-import DECIMER.Transformer_decoder as Transformer_decoder
+import decimer_transformation.config as config
+import decimer_transformation.Efficient_Net_encoder as Efficient_Net_encoder
+import decimer_transformation.Transformer_decoder as Transformer_decoder
 
 print(tf.__version__)
 

@@ -32,9 +32,9 @@ import tensorflow as tf
 from absl import logging
 from six.moves import xrange
 
-from DECIMER.efficientnetv2 import effnetv2_configs
-from DECIMER.efficientnetv2 import hparams
-from DECIMER.efficientnetv2 import utils
+from decimer_transformation.efficientnetv2 import effnetv2_configs
+from decimer_transformation.efficientnetv2 import hparams
+from decimer_transformation.efficientnetv2 import utils
 
 
 def conv_kernel_initializer(shape, dtype=None, partition_info=None):

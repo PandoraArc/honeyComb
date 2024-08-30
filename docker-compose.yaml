@@ -40,6 +40,15 @@ services:
             - ./models/segmentation/app:/home/app
             - ./data/models/segmentation:/home/data
         working_dir: /home
+    
+    trans:
+        build: ./models/transformation
+        expose:
+            - 80
+        volumes:
+            - ./models/transformation/app:/home/app
+            - ./data/models/transformation:/home/data
+        working_dir: /home
 
     minio: 
         image: quay.io/minio/minio

@@ -12,8 +12,8 @@ from PIL import Image
 from PIL import ImageEnhance
 from pillow_heif import register_heif_opener
 
-import DECIMER.Efficient_Net_encoder as Efficient_Net_encoder
-import DECIMER.Transformer_decoder as Transformer_decoder
+import decimer_transformation.Efficient_Net_encoder as Efficient_Net_encoder
+import decimer_transformation.Transformer_decoder as Transformer_decoder
 
 
 TARGET_DTYPE = tf.float32
