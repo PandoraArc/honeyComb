@@ -1,16 +1,22 @@
 /backend/app/__pycache__
+
 /models/classification/app/__pycache__/
 /models/classification/app/minio_manager/__pycache__/
-/mpdels/segmentation/app/__pycache__/
+
+/models/segmentation/app/__pycache__
 /models/segmentation/app/minio_manager/__pycache__/
+/models/segmentation/decimer_segmentation/__pycache__/
+/models/segmentation/decimer_segmentation/mrcnn/__pycache__
+/models/segmentation/decimer_segmentation/mask_rcnn_molecule.h5
+
 /models/transformation/app/__pycache__/
 /models/transformation/app/minio_manager/__pycache__/
 /models/transformation/decimer_transformation/efficientnetv2/__pycache__/
 /models/transformation/decimer_transformation/__pycache__/
 
-/models/segmentation/app/__pycache__
-/models/segmentation/decimer_segmentation/__pycache__/
-/models/segmentation/decimer_segmentation/mrcnn/__pycache__
+
+
+
 
 /minio/data
 /data
