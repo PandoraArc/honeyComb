@@ -9,6 +9,7 @@ import cv2
 import argparse
 import warnings
 import numpy as np
+import gdown
 from copy import deepcopy
 from itertools import cycle
 from multiprocessing import Pool
@@ -205,10 +206,12 @@ def load_model() -> modellib.MaskRCNN:
     # Download trained weights if needed
     if not os.path.exists(model_path):
         print("Downloading model weights...")
-        url = "https://zenodo.org/record/10663579/files/mask_rcnn_molecule.h5?download=1"
-        req = requests.get(url, allow_redirects=True)
-        with open(model_path, "wb") as model_file:
-            model_file.write(req.content)
+        url = "https://drive.google.com/uc?id=1X00tXxqvbJNnaLJybVGQD00c1UYUe7SG"
+        # url = "https://zenodo.org/record/10663579/files/mask_rcnn_molecule.h5?download=1"
+        # req = requests.get(url, allow_redirects=True)
+        # with open(model_path, "wb") as model_file:
+        #     model_file.write(req.content)
+        gdown.download(url, model_path, quiet=False)
         print("Successfully downloaded the segmentation model weights!")
     # Create model object in inference mode.
     model = modellib.MaskRCNN(mode="inference", model_dir=".", config=InferenceConfig())

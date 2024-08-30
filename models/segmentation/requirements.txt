@@ -11,3 +11,4 @@ uvicorn==0.30.5
 minio==7.2.7
 # fastapi==0.95.2
 fastapi==0.112.0
+gdown==5.2.0
