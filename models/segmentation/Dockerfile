@@ -1,4 +1,4 @@
-FROM tensorflow/tensorflow:2.13.0
+FROM tensorflow/tensorflow:2.12.0
 
 WORKDIR /home
 
