@@ -3,13 +3,16 @@ import io
 import json
 import os
 import traceback
+import tempfile
 from datetime import datetime, timezone
 from typing import Optional
 
 import magic
 from decimer_segmentation import segment_chemical_structures
-from fastapi import APIRouter, FastAPI, File, Request, Response, UploadFile
+from fastapi import APIRouter, FastAPI, File, Request, UploadFile, HTTPException
 from fastapi.responses import RedirectResponse
+from pdf2image import convert_from_path
+import numpy as np
 from PIL import Image
 from starlette.responses import StreamingResponse
 
@@ -45,9 +48,64 @@ async def about(request: Request):
     }
 
 
-@router.post("/")
+@router.post("/predict")
 async def segmentation(file: UploadFile = File(...)):
-    pass
+    
+    if file.content_type == 'application/pdf':
+        images = convert_from_path(file.file)
+        image = images[0]
+    elif file.content_type == 'image/png':
+        image = Image.open(io.BytesIO(await file.read()))
+    else:
+        return "Unsupported file type"
+    
+    try:
+        image_array = np.array(image)        
+        segments = segment_chemical_structures(
+            image_array,
+            expand=True,
+            visualization=False,
+        )
+        # collect the original image and the segmented image
+        response = {
+            "original": None,
+            "segments": [],
+        }
+        man = MinIoManager()
+        mine = magic.Magic(mime=True)
+        file.file.seek(0)
+        content_type = mine.from_buffer(file.file.read(1024))
+        file.file.seek(0)  
+        tags = {
+            "content_type": content_type,
+            "created": datetime.now(timezone.utc).isoformat(),
+        }
+        file_ext = os.path.splitext(file.filename)[1]
+        timestamp = datetime.now(timezone.utc).strftime('%Y%m%dT%H%M%S')
+        filename = f"segmentation/{timestamp}{file_ext}"
+        response['original'] = man.put_object_stream(filename, file.file, -1, tags)
+        
+        for i, segment in enumerate(segments):
+            segment_image = Image.fromarray(segment)
+            file = tempfile.NamedTemporaryFile(delete=False, suffix=".png")
+            with open(file.name, "wb") as f:
+                segment_image.save(f, format="PNG")
+            tags = {
+                "content_type": 'image/png',
+                "created": datetime.now(timezone.utc).isoformat(),
+            }
+            filename = f"segmentation/{timestamp}_segment_{i}.png"
+            res = man.put_object_stream(filename, open(file.name, "rb"), -1, tags)
+            response['segments'].append(res)
+                    
+    except Exception as e:
+        raise HTTPException(
+            status_code=400,
+            detail=f"Error processing image: {e}",
+        )
+    
+    return response
+    
 
 
 app.include_router(router)
