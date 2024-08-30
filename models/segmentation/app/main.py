@@ -1,8 +1,5 @@
-import html
 import io
-import json
 import os
-import traceback
 import tempfile
 from datetime import datetime, timezone
 from typing import Optional
@@ -14,7 +11,6 @@ from fastapi.responses import RedirectResponse
 from pdf2image import convert_from_path
 import numpy as np
 from PIL import Image
-from starlette.responses import StreamingResponse
 
 from app.minio_manager.manager import MinIoManager
 
@@ -31,7 +27,7 @@ router = APIRouter(prefix=ROOT_PATH)
 
 @router.get("/")
 async def root():
-    return RedirectResponse(url="/about")
+    return RedirectResponse(url=f"{ROOT_PATH}/about")
 
 
 @router.get("/ping")
