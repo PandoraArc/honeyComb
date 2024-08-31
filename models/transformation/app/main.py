@@ -52,6 +52,10 @@ async def predict(file: UploadFile = File(...)):
     try:
         image_bytes = await file.read()
         smiles = predict_SMILES(io.BytesIO(image_bytes))
+        modified_smiles = smiles.replace('=', '_eq').replace("(", '_left').replace(")", "_right")
+        
+        # for smiles string to original
+        # converted_smiles = modified_smiles.replace('_eq', '=').replace('_left', '(').replace('_right', ')') 
                 
         man = MinIoManager()
         mine = magic.Magic(mime=True)
@@ -60,8 +64,8 @@ async def predict(file: UploadFile = File(...)):
         file.file.seek(0)
         tags = {
             "content_type": content_type,
-            "created_at": datetime.now(timezone.utc).isoformat(),
-            "SMILES": smiles
+            "created_at": str(datetime.now(timezone.utc).isoformat()),
+            "SMILES": modified_smiles
         }
         file_ext = os.path.splitext(file.filename)[1]
         timestamp = datetime.now(timezone.utc).strftime('%Y%m%dT%H%M%S')
@@ -70,10 +74,15 @@ async def predict(file: UploadFile = File(...)):
         
     except Exception as e:
         traceback.print_exc()
-        raise HTTPException(status_code=500, detail="Error processing image: {e}")
+        raise HTTPException(status_code=500, detail=f"Error processing image: {e}")
     
     
-    return res
+    return {
+        "status": "success",
+        "filename": file.filename,
+        "SMILES": smiles,
+        'minio_res': res
+    }
 
 
 app.include_router(router)
