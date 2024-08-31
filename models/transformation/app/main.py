@@ -49,11 +49,31 @@ async def about(request: Request):
 @router.post("/predict")
 async def predict(file: UploadFile = File(...)):
     
-    image_bytes = await file.read()
-    smile = predict_SMILES(io.BytesIO(image_bytes))
+    try:
+        image_bytes = await file.read()
+        smiles = predict_SMILES(io.BytesIO(image_bytes))
+                
+        man = MinIoManager()
+        mine = magic.Magic(mime=True)
+        file.file.seek(0)
+        content_type = mine.from_buffer(file.file.read(1024))
+        file.file.seek(0)
+        tags = {
+            "content_type": content_type,
+            "created_at": datetime.now(timezone.utc).isoformat(),
+            "SMILES": smiles
+        }
+        file_ext = os.path.splitext(file.filename)[1]
+        timestamp = datetime.now(timezone.utc).strftime('%Y%m%dT%H%M%S')
+        filename = f"transformation/{timestamp}{file_ext}"
+        res = man.put_object_stream(filename, file.file, -1, tags)
+        
+    except Exception as e:
+        traceback.print_exc()
+        raise HTTPException(status_code=500, detail="Error processing image: {e}")
     
     
-    return {"smile": smile}
+    return res
 
 
 app.include_router(router)
