@@ -10,11 +10,8 @@ COPY . .
 RUN pip install -r requirements.txt
 RUN apt-get update && apt-get install -y libmagic1 libgl1
 
+# load weights model
+RUN gdown https://drive.google.com/uc?id=1X00tXxqvbJNnaLJybVGQD00c1UYUe7SG -O /home/decimer_segmentation/mask_rcnn_molecule.h5
 
-# Set the entry point to run the script using the conda environment
-# ENTRYPOINT ["conda", "run", "-n", "decimer"]
-# ENTRYPOINT ["bash"]
-# ENTRYPOINT ["conda", "run", "-n", "decimer", "./run.sh"]
-# ENTRYPOINT ["conda", "run", "-n", "decimer", "./run.sh"]
 
 CMD ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "80", "--reload"]
