@@ -7,5 +7,6 @@ python-magic==0.4.15
 fastapi==0.112.0
 uvicorn==0.30.5
 minio==7.2.7
-pyyaml
-python-multipart
+pyyaml==6.0.2
+python-multipart==0.0.9
+gdown==5.2.0
