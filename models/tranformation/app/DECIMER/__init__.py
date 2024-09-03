@@ -22,16 +22,10 @@ please raise a issue on the Github repository.
 __version__ = "2.6.0"
 
 __all__ = [
-    "decimer_transformation",
+    "DECIMER",
 ]
 
-from .decimer import predict_SMILES, DECIMER_V2
-# from . import config
 
-from .config import *
-from .decimer import *
-from .Efficient_Net_encoder import *
-from .Predictor_usingCheckpoints import *
-from .Repack_model import *
-from .Transformer_decoder import *
-from .utils import *
+# from .decimer import predict_SMILES
+
+from DECIMER.decimer import *

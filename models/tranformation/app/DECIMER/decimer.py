@@ -5,13 +5,11 @@ import sys
 from typing import List
 from typing import Tuple
 
+import pystow
 import tensorflow as tf
 
-# import decimer_transformation.config as config
-# import decimer_transformation.utils as utils
-
-from . import config
-from . import utils
+import DECIMER.config as config
+import DECIMER.utils as utils
 
 # Silence tensorflow model loading warnings.
 logging.getLogger("absl").setLevel("ERROR")
@@ -53,6 +51,7 @@ def get_models(model_paths: dict):
 
     return tokenizer, DECIMER_V2, DECIMER_Hand_drawn
 
+#define path to models
 model_paths = {
     'DECIMER': 'decimer_transformation_models/DECIMER_model',
     'DECIMER_HandDrawn': 'decimer_transformation_models/DECIMER_HandDrawn_model'
