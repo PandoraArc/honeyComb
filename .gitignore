@@ -18,3 +18,5 @@ models/transformation/app/__pycache__
 models/transformation/decimer_transformation/efficientnetv2/__pycache__/*
 
 models/transformation/decimer_transformation_models/*
+
+models/classification/app/minio_manager/__pycache__/*
