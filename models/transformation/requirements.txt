@@ -1,0 +1,16 @@
+efficientnet
+opencv-python
+pillow-heif
+pre-commit
+pystow
+tensorflow>=2.8.0,<=2.15.0
+ipyplot
+matplotlib
+pillow>=8.2.0
+attrs>=19.2.0
+fastapi==0.112.0
+python-multipart==0.0.9
+uvicorn==0.30.5
+minio==7.2.7
+python-magic==0.4.15
+numpy==1.23.5
