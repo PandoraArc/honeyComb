@@ -19,7 +19,6 @@ services:
             - RUN_ENV=DEVELOPMENT
         volumes:
             - ./backend:/app
-            - ./data/backend:/data
             - ./data/backend:/app/data
         working_dir: /app
 
