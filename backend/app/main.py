@@ -1,10 +1,10 @@
 import html
 import json
-import httpx 
+import httpx
+import os
 from typing import Optional
 
 import logging
-import requests
 
 import magic
 from fastapi import (
