@@ -39,9 +39,9 @@ async def about(request: Request):
 
 
 @app.post("/predict")
-async def predict(picture: UploadFile = File(...)):
+async def predict(file: UploadFile = File(...)):
     try:
-        image_bytes = await picture.read()
+        image_bytes = await file.read()
         image = Image.open(io.BytesIO(image_bytes))
 
         decimer_image_classifier = DecimerImageClassifier()
@@ -51,18 +51,18 @@ async def predict(picture: UploadFile = File(...)):
         # Save the image to MinIO
         man = MinIoManager()
         mine = magic.Magic(mime=True)
-        picture.file.seek(0)
-        content_type = mine.from_buffer(picture.file.read(1024))
-        picture.file.seek(0)
+        file.file.seek(0)
+        content_type = mine.from_buffer(file.file.read(1024))
+        file.file.seek(0)
         tags = {
             "content_type": content_type,
             "upload_time": datetime.now(timezone.utc).isoformat(),
             "is_chem": is_chem,
             "is_chem_score": score,
         }
-        file_ext = os.path.splitext(picture.filename)[1]
+        file_ext = os.path.splitext(file.filename)[1]
         filename = f"classification/{datetime.now(timezone.utc).strftime('%Y%m%dT%H%M%S')}{file_ext}"
-        minio_res = man.put_object_stream(filename, picture.file, -1, tags)
+        minio_res = man.put_object_stream(filename, file.file, -1, tags)
 
     except Exception as e:
         traceback.print_exc()
@@ -74,7 +74,7 @@ async def predict(picture: UploadFile = File(...)):
 
     return {
         "status": "success",
-        "filename": picture.filename,
+        "filename": file.filename,
         "score": float(score),
         "is_chem": is_chem,
         "minio_res": minio_res,
