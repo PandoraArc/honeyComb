@@ -1,16 +1,25 @@
 import html
-import magic
 import json
-
+import httpx 
 from typing import Optional
 
-import sqlite3
+import logging
+import requests
 
-from fastapi import FastAPI, Request, HTTPException, Response, UploadFile, File, Request
-from pydantic import BaseModel
+import magic
+from fastapi import (
+    BackgroundTasks,
+    FastAPI,
+    HTTPException,
+    Request,
+    Response,
+    UploadFile,
+    File
+)
 from starlette.responses import StreamingResponse
 
 from app.minio_manager.manager import MinIoManager
+from app.session_manager import SessionIn, SessionManager
 
 ROOT_PATH = "/api"
 DOCS_PATH = "/docs"
@@ -21,6 +30,7 @@ app = FastAPI(
     docs_url=DOCS_PATH,
 )
 
+logger = logging.getLogger(__name__)
 
 @app.get("/")
 async def root():
@@ -40,75 +50,30 @@ async def about(request: Request):
 @app.get("/session")
 async def session_search(session_id: Optional[int] = None):
     try:
-        sql = "SELECT * FROM session WHERE 1"
-        if session_id:
-            sql += f" AND id = {session_id}"
-        
-        conn = sqlite3.connect("./data/data.db")
-        cursor = conn.cursor() 
-        cursor.execute(sql)
-        res = cursor.fetchall()
-
+        man =  SessionManager()
+        res = man.get_session(session_id)
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
-    finally:
-        conn.close()
-
-    return {"data": res}
-
-class SessionIn(BaseModel):
-    segmentation_path: Optional[str] = None
-    classification_path: Optional[str] = None
-    transformation_path: Optional[str] = None
-    
+    return res
 
 @app.post("/session")
 async def session_post(sessionIn: SessionIn):
     try:
-        if all(v is None for v in sessionIn.model_dump().values()):
-            raise HTTPException(status_code=400, detail="At least one path is required")
-        
-        sql = f"INSERT INTO session (segmentation_path, classification_path, transformation_path) VALUES ('{sessionIn.segmentation_path}', '{sessionIn.classification_path}', '{sessionIn.transformation_path}')"
-        conn = sqlite3.connect("./data/data.db")
-        cursor = conn.cursor()
-        cursor.execute(sql)
-        row_id = cursor.lastrowid
-        conn.commit()
-        
+        man = SessionManager()
+        res = man.create_session(sessionIn)
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
-    finally:
-        conn.close()
-
-    return {"row_id": row_id}
+    return res
 
 
 @app.put("/session/{session_id}")
 async def update_session(session_id: int, sessionIn: SessionIn):
     try:
-        if all(v is None for v in sessionIn.model_dump().values()):
-            raise HTTPException(status_code=400, detail="At least one path is required")
-        
-        sql = f"""
-            UPDATE session
-            SET
-                segmentation_path = '{sessionIn.segmentation_path}',
-                classification_path = '{sessionIn.classification_path}',
-                transformation_path = '{sessionIn.transformation_path}'
-            WHERE id = {session_id}
-        """
-        conn = sqlite3.connect("./data/data.db")
-        cursor = conn.cursor()
-        cursor.execute(sql)
-        res = cursor.rowcount
-        conn.commit()
-        
+        man = SessionManager()
+        res = man.update_session(session_id, sessionIn)
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
-    finally:
-        conn.close()
-        
-    return {"row_count": res}
+    return res
 
 
 @app.get("/minio/{path_name:path}")
@@ -179,3 +144,100 @@ async def object_post(
 
     return {"status": "success", "object": res, "tags": m_tags}
 
+
+async def process_file(session_id: str,
+                       file_content: bytes, 
+                       filename: str, 
+                       content_type: str):
+    obj = {
+        "segmentation_path": None,
+        "classification_path": None,
+        "clasification_data": None,
+        "transformation_path": None,
+        "transformation_data": None
+    }    
+    
+    step = "segmentation"
+    try:
+        minio_man = MinIoManager()
+        sess_man = SessionManager()
+        
+        # segmentation
+        logger.info(f"Segmenting the image - session_id: {session_id}")
+        files = {"file": (filename, file_content, content_type)}
+
+        async with httpx.AsyncClient(timeout=300) as client:
+            seg_res = await client.post("http://seg:80/seg/api/predict", files=files)
+            seg_res = seg_res.json()
+        
+        seg_paths = [s.get('_object_name') for s in seg_res['segments']]
+        logger.info("Segmentation successful")
+        obj['segmentation_path'] = ",".join(seg_paths)
+        sess_man.update_session(session_id, SessionIn(**obj))
+        
+        # classification
+        logger.info(f"Classifying the image - session_id: {session_id} - segment_count: {len(seg_res['segments'])}")
+        is_chems = []
+        smiles = []
+        cls_paths = []
+        trans_paths = []
+        
+        async with httpx.AsyncClient(timeout=300) as client:
+            for path in seg_paths:
+                step = "classification"
+                picture = minio_man.get_object_content(path, decode=False)
+                cls_res = await client.post("http://cls:80/cls/api/predict", files={"file": picture})
+                cls_res = cls_res.json()
+                
+                is_chem = cls_res.get('is_chem')
+                is_chems.append(str(is_chem))
+                cls_paths.append(cls_res.get('minio_res', {}).get('_object_name'))
+                
+                if is_chem:
+                    step = "transformation"
+                    logger.info(f"Transforming the image - session_id: {session_id} - segment_path: {path}")
+                    trans_res = await client.post("http://trans:80/trans/api/predict", files={"file": picture})
+                    trans_res = trans_res.json()
+                    smiles.append(trans_res.get('SMILES'))
+                    trans_paths.append(trans_res.get('minio_res', {}).get('_object_name')) 
+                else:
+                    logger.info(f"Chemical structure not detected - session_id: {session_id} - segment_path: {path}")
+                    smiles.append("N/A")
+                    trans_paths.append("N/A")
+        
+        logger.info(f"Updating session - session_id: {session_id}")
+        obj['classification_path'] = ",".join(cls_paths)
+        obj["clasification_data"] = ",".join(is_chems)
+        obj['transformation_path'] = ",".join(trans_paths)
+        obj["transformation_data"] = ",".join(smiles)
+        sess_man.update_session(session_id, SessionIn(**obj))
+        
+        logger.info(f"Processing complete - session_id: {session_id}")
+    except Exception as e:
+        logger.error(f"Error in {step}: {str(e)}")
+
+
+@app.post("/predict")
+async def predict(background_tasks: BackgroundTasks, file: UploadFile = File(...)):
+    try:
+        file_content = await file.read() 
+        filename = file.filename 
+        content_type = file.content_type
+        
+        sess_man = SessionManager()
+        session = sess_man.create_session(SessionIn())
+        session_id = session.get('row_id')
+        
+        if session_id is None:
+            raise HTTPException(status_code=500, detail="Failed to create a session")
+        
+        # Add the file processing task to run in the background
+        background_tasks.add_task(process_file, session_id, file_content, filename, content_type)
+        
+        return {
+            "status": "success",
+            "session_id": session_id
+        }
+        
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
