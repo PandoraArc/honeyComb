@@ -83,16 +83,16 @@ async def segmentation(file: UploadFile = File(...)):
         
         for i, segment in enumerate(segments):
             segment_image = Image.fromarray(segment)
-            file = tempfile.NamedTemporaryFile(delete=False, suffix=".png")
-            with open(file.name, "wb") as f:
-                segment_image.save(f, format="PNG")
-            tags = {
-                "content_type": 'image/png',
-                "created": datetime.now(timezone.utc).isoformat(),
-            }
-            filename = f"segmentation/{timestamp}_segment_{i}.png"
-            res = man.put_object_stream(filename, open(file.name, "rb"), -1, tags)
-            response['segments'].append(res)
+            with tempfile.NamedTemporaryFile(delete=False, suffix=".png") as temp_file:
+                segment_image.save(temp_file, format="PNG")
+                temp_file.seek(0)
+                tags = {
+                    "content_type": 'image/png',
+                    "created": datetime.now(timezone.utc).isoformat(),
+                }
+                filename = f"segmentation/{timestamp}_segment_{i}.png"
+                res = man.put_object_stream(filename, temp_file, -1, tags)
+                response['segments'].append(res)
                     
     except Exception as e:
         raise HTTPException(
