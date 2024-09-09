@@ -6,9 +6,17 @@ services:
             - "12021:80"
         links:
             - api
+            - web
         volumes: 
             - ./etc/nginx:/etc/nginx/conf.d
             - ./data/ingress:/data/
+    
+    web:
+        build: ./frontend
+        ports:
+            - "3000:3000"
+        volumes:
+            - ./frontend:/app
 
     api:
         # image: tiangolo/uvicorn-gunicorn-fastapi:python3.8
