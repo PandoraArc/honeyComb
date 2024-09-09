@@ -53,7 +53,7 @@ class MinIoManager:
             objs.append((obj, mtags))
         return objs
 
-    def get_object_content(self, path_name):
+    def get_object_content(self, path_name, decode=True):
         """
         Get content of an object
         :param path_name:
@@ -62,7 +62,10 @@ class MinIoManager:
         client = self.minio_client
         try:
             res = client.get_object(self.bukket_name, path_name)
-            content = res.data.decode()
+            if decode:
+                content = res.data.decode()
+            else:
+                content = res.data
         finally:
             res.close()
             res.release_conn()
