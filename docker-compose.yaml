@@ -12,9 +12,11 @@ services:
             - ./data/ingress:/data/
     
     web:
-        build: ./frontend
+        image: node:18
+        working_dir: /app
         ports:
             - "3000:3000"
+        command: ["bash", "./init.sh"]
         volumes:
             - ./frontend:/app
 
