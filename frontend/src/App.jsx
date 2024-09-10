@@ -1,6 +1,5 @@
-import { useState } from "react";
 import { Upload, Button, Typography, List, message, Progress, Modal, Image} from "antd";
-import { UploadOutlined, RedoOutlined, InboxOutlined } from "@ant-design/icons";
+import { RedoOutlined, InboxOutlined } from "@ant-design/icons";
 
 import useApp from "./hook/useApp";
 
@@ -115,10 +114,28 @@ function App() {
         onCancel={onCloseModal}
         width={1000}
       >
+        <Typography.Title level={4}>Original Image</Typography.Title>
+        <Image
+            style={{
+              width: '50%'
+            }}
+            src={`/api/minio/${selectedItem.origin}?resp_type=data`}
+          >
+        </Image>
+        <hr
+          style={{
+            marginTop: '20px'
+          }}
+        />
+        <Typography.Title level={4}>Result</Typography.Title>
         {
-          selectedItem.data.map((e) => {
+          selectedItem.data.map((e, ind) => {
+            
+            if (e.path === 'None') return null;
+
             return(
-              <div 
+              <div
+                key={ind}
                 style={{
                   display: 'flex',
                   flexDirection: 'column',
@@ -131,7 +148,7 @@ function App() {
                   }}
                   src={`/api/minio/${e?.path}?resp_type=data`}>
                 </Image>
-                <Typography.Text> - Is checmical sturture? : {e?.isChem}</Typography.Text>
+                <Typography.Text> - Is checmical sturture?: {e?.isChem}</Typography.Text>
                 <Typography.Text> - SMILES: {e?.smiles}</Typography.Text>
               </div>
             )

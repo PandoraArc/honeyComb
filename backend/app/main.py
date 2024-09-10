@@ -172,6 +172,7 @@ async def process_file(session_id: str,
         
         seg_paths = [s.get('_object_name') for s in seg_res['segments']]
         logger.info("Segmentation successful")
+        obj['original_image_path'] = seg_res.get('original', {}).get('_object_name')
         obj['segmentation_path'] = ",".join(seg_paths)
         sess_man.update_session(session_id, SessionIn(**obj))
         

@@ -12,6 +12,7 @@ from fastapi import (
 )
 
 class SessionIn(BaseModel):
+    original_image_path: Optional[str] = None
     segmentation_path: Optional[str] = None
     classification_path: Optional[str] = None
     clasification_data: Optional[str] = None
@@ -30,7 +31,18 @@ class SessionManager:
     def get_session(self, session_id=None) -> dict:
         conn = sqlite3.connect(self.path)
         try:
-            sql = "SELECT * FROM session WHERE 1"
+            sql = """
+            SELECT
+                id,
+                original_image_path,
+                segmentation_path,
+                classification_path,
+                classification_data,
+                transformation_path,
+                transformation_data
+            FROM 
+                session WHERE 1
+            """
             if session_id:
                 sql += f" AND id = {session_id}"
 
@@ -50,8 +62,8 @@ class SessionManager:
         conn = sqlite3.connect(self.path)
         try:
             sql = f"""
-            INSERT INTO session (segmentation_path, classification_path, classification_data, transformation_path, transformation_data) 
-            VALUES ('{sessionIn.segmentation_path}', '{sessionIn.classification_path}',  '{sessionIn.clasification_data}', '{sessionIn.transformation_path}', '{sessionIn.transformation_data}')
+            INSERT INTO session (original_image_path, segmentation_path, classification_path, classification_data, transformation_path, transformation_data) 
+            VALUES ('{sessionIn.original_image_path}', '{sessionIn.segmentation_path}', '{sessionIn.classification_path}',  '{sessionIn.clasification_data}', '{sessionIn.transformation_path}', '{sessionIn.transformation_data}')
             """
             cursor = conn.cursor()
             cursor.execute(sql)
@@ -74,6 +86,7 @@ class SessionManager:
             sql = f"""
                 UPDATE session
                 SET
+                    original_image_path = '{sessionIn.original_image_path}',
                     segmentation_path = '{sessionIn.segmentation_path}',
                     classification_path = '{sessionIn.classification_path}',
                     classification_data = '{sessionIn.clasification_data}',

@@ -18,12 +18,12 @@ function useApp() {
             res?.data?.data?.forEach((item) => {
                 data.push({
                     session_id: item[0],
-                    segmentation_path: item[1]?.split(","),
-                    classification_path: item[2]?.split(","),
-                    classification_date: item[3]?.split(","),
-                    transformation_path: item[4]?.split(","),
-                    transformation_date: item[5]?.split(","),
-                    create_at: item[6]
+                    original_image_path: item[1],
+                    segmentation_path: item[2]?.split(","),
+                    classification_path: item[3]?.split(","),
+                    classification_date: item[4]?.split(","),
+                    transformation_path: item[5]?.split(","),
+                    transformation_date: item[6]?.split(","),
                 });
             });
             setSession(data);
@@ -34,6 +34,7 @@ function useApp() {
     const onSelectItem = (item) => {
         let obj = {
             title: item.session_id,
+            origin: item.original_image_path,
             data: []
         }
         for (let i = 0; i < item.segmentation_path.length; i++) {
@@ -44,6 +45,7 @@ function useApp() {
            }
            obj.data.push(file)
         }
+        console.log(obj)
 
         setSelectedItem(obj)
         setModalVisible(true)
