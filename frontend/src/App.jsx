@@ -1,29 +1,29 @@
 import { useState } from "react";
-import { Upload, Button, Typography, List, Avatar, Progress} from "antd";
-import { UploadOutlined } from "@ant-design/icons";
+import { Upload, Button, Typography, List, message, Progress, Modal, Image} from "antd";
+import { UploadOutlined, RedoOutlined, InboxOutlined } from "@ant-design/icons";
 
 import useApp from "./hook/useApp";
 
-function App() {
-  const { session, loading } = useApp();
+const { Dragger } = Upload;
 
-  const data = [
-    {
-      title: "Ant Design Title 1",
-    },
-    {
-      title: "Ant Design Title 2",
-    },
-    {
-      title: "Ant Design Title 3",
-    },
-    {
-      title: "Ant Design Title 4",
-    },
-  ];
+function App() {
+  const { session, loading, selectedItem, modelVisible, onSelectItem, onCloseModal} = useApp();
 
   return (
-    <div>
+    <div
+      style={{
+        margin: "0px 20px 0px 20px"
+      }}
+    >
+      <Typography.Title
+        level={3}
+        style={{
+          textAlign: "center",
+        }}
+      >
+        HoneyComb
+      </Typography.Title>
+
       <div
         style={{
           display: "flex",
@@ -33,34 +33,113 @@ function App() {
           gap: "16px",
         }}
       >
-        <Typography.Title level={3}>Upload a picture</Typography.Title>
-        <Upload>
-          <Button icon={<UploadOutlined />}>Upload</Button>
-        </Upload>
+        <Dragger
+          name='file'
+          multiple={false}
+          action="/api/predict"
+          onChange={(info) => {
+            const { status } = info.file;
+            if (status !== 'uploading') {
+              console.log(info.file, info.fileList);
+            }
+            if (status === 'done') {
+              message.success(`${info.file.name} file uploaded successfully.`);
+            } else if (status === 'error') {
+              message.error(`${info.file.name} file upload failed.`);
+            }
+          }}
+        >
+          <p className="ant-upload-drag-icon"> <InboxOutlined /></p>
+          <p className="ant-upload-text">Click or drag file to this area to upload</p>
+        </Dragger>
       </div>
+
+
+      <div
+        style={{
+          display: "flex",
+          justifyContent: "center",
+        }}
+      >
+        <Button
+          type="link"
+          icon={<RedoOutlined />}
+          onClick={() => window.location.reload(false)}
+        >
+          {" "}
+          Refresh
+        </Button>
+      </div>
+
       <div
         style={{
           margin: "16px",
         }}
       >
         <List
-            itemLayout="horizontal"
-            dataSource={data}
-            renderItem={(item, index) => (
-              <List.Item
-                actions={[<Button>Click me</Button>]}
-              >
-                <List.Item.Meta
-                  avatar={
-                    <Progress type="circle" percent={20} size={50} />
-                  }
-                  title={<a href="https://ant.design">{item.title}</a>}
-                  description="Ant Design, a design language for background applications, is refined by Ant UED Team"
-                />
-              </List.Item>
-            )}
-          />
+          itemLayout="horizontal"
+          dataSource={session ?? []}
+          renderItem={(item, index) => (
+            <List.Item actions={[
+              <Button
+                onClick={() => {onSelectItem(item)}}
+              >Click me</Button>
+            ]}>
+              <List.Item.Meta
+                avatar={
+                  <Progress
+                    type="circle"
+                    percent={
+                      item?.segmentation_path != "None"
+                        ? item?.transformation_path != "None"
+                          ? 100
+                          : 50
+                        : 50
+                    }
+                    size={50}
+                  />
+                }
+                title={`session - ${item.session_id}`}
+              />
+            </List.Item>
+          )}
+        />
       </div>
+
+      {/* Modal */}
+      <Modal
+        title={`Session ${selectedItem.title}`}
+        centered
+        open={modelVisible}
+        onOk={onCloseModal}
+        onCancel={onCloseModal}
+        width={1000}
+      >
+        {
+          selectedItem.data.map((e) => {
+            return(
+              <div 
+                style={{
+                  display: 'flex',
+                  flexDirection: 'column',
+                  marginTop: '20px'
+                }}
+              >
+                <Image 
+                  style={{
+                    width: '15%'
+                  }}
+                  src={`/api/minio/${e?.path}?resp_type=data`}>
+                </Image>
+                <Typography.Text> - Is checmical sturture? : {e?.isChem}</Typography.Text>
+                <Typography.Text> - SMILES: {e?.smiles}</Typography.Text>
+              </div>
+            )
+          })
+        }
+
+      </Modal>
+
 
     </div>
   );
