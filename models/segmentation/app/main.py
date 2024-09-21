@@ -50,7 +50,7 @@ async def segmentation(file: UploadFile = File(...)):
     if file.content_type == 'application/pdf':
         images = convert_from_path(file.file)
         image = images[0]
-    elif file.content_type == 'image/png':
+    elif (file.content_type == 'image/png' or file.content_type == 'image/jpeg'):
         image = Image.open(io.BytesIO(await file.read()))
     else:
         return "Unsupported file type"
@@ -87,7 +87,7 @@ async def segmentation(file: UploadFile = File(...)):
                 segment_image.save(temp_file, format="PNG")
                 temp_file.seek(0)
                 tags = {
-                    "content_type": 'image/png',
+                    "content_type": file.content_type,
                     "created": datetime.now(timezone.utc).isoformat(),
                 }
                 filename = f"segmentation/{timestamp}_segment_{i}.png"
