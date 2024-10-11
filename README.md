@@ -69,7 +69,7 @@ cd /home
 
 3.install requirement
 ```
-pip install -r requirement_train.txt
+pip install -r requirements_train.txt
 ```
 
 3. run traing 
@@ -78,3 +78,16 @@ python trainer.py --data ./example_data --save_folder ./mymodel --initial_epochs
 ```
 
 - (optional) you can optimize paramaters --datam, --save_folder, --initial_epochs, --fine_tune_epochs as you wish
+
+
+#### Training Transformation
+1 pip install requirement
+2 apt-get update && apt-get install -y libgl1-mesa-glx libmagic1
+3 create tfrecord from images
+```
+python decimer_transformation/Utils/Create_TFrecord_From_images.py --smile_path ./example_data/smiles.txt --base_image_path ./example_data/
+```
+4.run training file
+```
+python -m decimer_transformation.DECIMER_EfficinetNetV2_Transfomer_Trainer
+```
