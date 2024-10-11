@@ -272,7 +272,7 @@ class Config:
         """
         self.transformer_config = dict(
             num_layers=n_transformer_layers,
-            d_model=image_embedding_dim,
+            d_model=image_embedding_dim[1],
             num_heads=transformer_n_heads,
             dff=transformer_d_dff,
             target_vocab_size=vocab_len,
@@ -309,6 +309,7 @@ class CustomSchedule(tf.keras.optimizers.schedules.LearningRateSchedule):
         self.warmup_steps = warmup_steps
 
     def __call__(self, step):
+        step = tf.cast(step, tf.float32)
         arg1 = tf.math.rsqrt(step)
         arg2 = step * (self.warmup_steps**-1.5)
 
