@@ -2,41 +2,40 @@ import pickle
 import re
 import sys
 import time
+import gdown
 from datetime import datetime
 
-import config
-import Efficient_Net_encoder
+import decimer_transformation.config as config
+import decimer_transformation.Efficient_Net_encoder as Efficient_Net_encoder
 import efficientnet.tfkeras as efn
 import matplotlib as mpl
 import matplotlib.pyplot as plt
 import tensorflow as tf
-import Transformer_decoder
-
-mpl.use("Agg")
-
-# Set TPUs
-
-tpu = tf.distribute.cluster_resolver.TPUClusterResolver(tpu="node-name")
-print("Running on TPU ", tpu.master())
-
-tf.config.experimental_connect_to_cluster(tpu)
-tf.tpu.experimental.initialize_tpu_system(tpu)
-strategy = tf.distribute.TPUStrategy(tpu)
-
-print("Number of devices: {}".format(strategy.num_replicas_in_sync), flush=True)
-print("REPLICAS: ", strategy.num_replicas_in_sync, flush=True)
-print(datetime.now().strftime("%Y/%m/%d %H:%M:%S"), "Network Started", flush=True)
+import decimer_transformation.Transformer_decoder as Transformer_decoder
 
 # Load the Data
 total_data = 1000000  # datasize integer
 
-tokenizer = pickle.load(open("tokenizer_Isomeric_SMILES.pkl", "rb"))
-max_length = pickle.load(open("max_length_Isomeric_SMILES.pkl", "rb"))
+# load the tokenizer and max_length
+gdown.download(
+    "https://drive.google.com/uc?id=1WxeBTGK2gwigiEhlD_3IoeaAqcObHZWK",
+    "tokenizer_SMILES.pkl",
+    quiet=False
+)
+
+gdown.download(
+    "https://drive.google.com/uc?id=1qOpCSPfZQ5Eu0WXRDt3QHxoxxT2mXJIs",
+    "max_length_SMILES.pkl",
+    quiet=False
+)
+
+tokenizer = pickle.load(open("tokenizer_SMILES.pkl", "rb"))
+max_length = pickle.load(open("max_length_SMILES.pkl", "rb"))
 
 PAD_TOKEN = tf.constant(tokenizer.word_index["<pad>"], dtype=tf.int32)
 
 # Image parameters
-IMG_EMB_DIM = (10, 10, 232)
+IMG_EMB_DIM = (10, 10, 512)
 IMG_EMB_DIM = (IMG_EMB_DIM[0] * IMG_EMB_DIM[1], IMG_EMB_DIM[2])
 IMG_SHAPE = (299, 299, 3)
 PE_INPUT = IMG_EMB_DIM[0]
@@ -45,8 +44,8 @@ D_MODEL = IMG_EMB_DEPTH
 
 # Set Training Epochs
 EPOCHS = 40
-REPLICA_BATCH_SIZE = 128
-BATCH_SIZE = REPLICA_BATCH_SIZE * strategy.num_replicas_in_sync
+REPLICA_BATCH_SIZE = 2
+BATCH_SIZE = REPLICA_BATCH_SIZE
 print(BATCH_SIZE)
 BUFFER_SIZE = 10000
 target_vocab_size = max_length
@@ -92,8 +91,6 @@ def decode_image(image_data):
         pass
     img = tf.image.resize(img, (299, 299))
     img = efn.preprocess_input(img)
-    # img = tf.expand_dims(img, 0)
-    # print(img)
     return img
 
 
@@ -149,7 +146,6 @@ def get_dataset(batch_size=BATCH_SIZE, buffered_size=BUFFER_SIZE, path=""):
         train_dataset (): single batch of datapoints
     """
     options = tf.data.Options()
-    # filenames = tf.io.gfile.glob(path)
     filenames = sorted(tf.io.gfile.glob(path), key=numericalSort)
     print(len(filenames))
     fx = open("filenames", "w")
@@ -170,13 +166,7 @@ def get_dataset(batch_size=BATCH_SIZE, buffered_size=BUFFER_SIZE, path=""):
     return train_dataset
 
 
-train_dataset = strategy.experimental_distribute_dataset(
-    get_dataset(path="gs://tpu-test-koh/DECIMER_V2/RanDepict/*.tfrecord")
-)
-# validation_dataset = strategy.experimental_distribute_dataset(get_dataset(path="gs://tpu-test-koh/DECIMER_V2/RanDepict/Val_data/*.tfrecord"))
-
-
-# validation_dataset = strategy.experimental_distribute_dataset(get_validation_dataset())
+train_dataset = get_dataset(path="./data/*.tfrecord")
 
 training_config = config.Config()
 training_config.initialize_transformer_config(
@@ -220,58 +210,52 @@ def prepare_for_training(lr_config, encoder_config, transformer_config, verbose=
         loss_function, optimizer, model and the metrics
     """
 
-    with strategy.scope():
-        loss_object = tf.keras.losses.SparseCategoricalCrossentropy(
-            from_logits=True, reduction=tf.keras.losses.Reduction.NONE
-        )
+    loss_object = tf.keras.losses.SparseCategoricalCrossentropy(
+        from_logits=True, reduction=tf.keras.losses.Reduction.NONE
+    )
 
-        def loss_fn(real, pred):
-            # Convert to uint8
-            mask = tf.math.logical_not(tf.math.equal(real, 0))
-            loss_ = loss_object(real, pred)
-            loss_ *= tf.cast(mask, dtype=loss_.dtype)
-            loss_ = tf.nn.compute_average_loss(
-                loss_, global_batch_size=REPLICA_BATCH_SIZE
-            )
-            return loss_
-
-        train_loss = tf.keras.metrics.Mean(name="train_loss", dtype=tf.float32)
-        train_accuracy = tf.keras.metrics.SparseCategoricalAccuracy(
-            name="train_accuracy", dtype=tf.float32
+    def loss_fn(real, pred):
+        # Convert to uint8
+        mask = tf.math.logical_not(tf.math.equal(real, 0))
+        loss_ = loss_object(real, pred)
+        loss_ *= tf.cast(mask, dtype=loss_.dtype)
+        loss_ = tf.nn.compute_average_loss(
+            loss_, global_batch_size=REPLICA_BATCH_SIZE
         )
-        """validation_loss = tf.keras.metrics.Mean(
+        return loss_
 
-        name="validation_loss", dtype=tf.float32 ) validation_accuracy =
-        tf.keras.metrics.SparseCategoricalAccuracy(
-        name="validation_accuracy", dtype=tf.float32 )
-        """
-        # Declare the learning rate schedule (try this as actual lr schedule and list...)
-        lr_scheduler = config.CustomSchedule(
-            transformer_config["d_model"], lr_config["warm_steps"]
-        )
+    train_loss = tf.keras.metrics.Mean(name="train_loss", dtype=tf.float32)
+    train_accuracy = tf.keras.metrics.SparseCategoricalAccuracy(
+        name="train_accuracy", dtype=tf.float32
+    )
 
-        # Instantiate an optimizer
-        optimizer = tf.keras.optimizers.Adam(
-            lr_scheduler, beta_1=0.9, beta_2=0.98, epsilon=1e-9
-        )
+    # Declare the learning rate schedule (try this as actual lr schedule and list...)
+    lr_scheduler = config.CustomSchedule(
+        transformer_config["d_model"], lr_config["warm_steps"]
+    )
 
-        # Instantiate the encoder model
-        encoder = Efficient_Net_encoder.Encoder(**encoder_config)
-        initialization_batch = encoder(
-            tf.ones(
-                ((REPLICA_BATCH_SIZE,) + encoder_config["image_shape"]),
-                dtype=TARGET_DTYPE,
-            ),
-            training=False,
-        )
+    # Instantiate an optimizer
+    optimizer = tf.keras.optimizers.Adam(
+        lr_scheduler, beta_1=0.9, beta_2=0.98, epsilon=1e-9
+    )
 
-        # Instantiate the decoder model
-        transformer = Transformer_decoder.Transformer(**transformer_config)
-        transformer(
-            initialization_batch,
-            tf.random.uniform((REPLICA_BATCH_SIZE, 1)),
-            training=False,
-        )
+    # Instantiate the encoder model
+    encoder = Efficient_Net_encoder.Encoder(**encoder_config)
+    initialization_batch = encoder(
+        tf.ones(
+            ((REPLICA_BATCH_SIZE,) + encoder_config["image_shape"]),
+            dtype=TARGET_DTYPE,
+        ),
+        training=False,
+    )
+    
+    # Instantiate the decoder model
+    transformer = Transformer_decoder.Decoder(**transformer_config)
+    transformer(
+        initialization_batch,
+        tf.random.uniform((REPLICA_BATCH_SIZE, 1)),
+        training=False,
+    )
 
     # Show the model architectures and plot the learning rate
     if verbose:
@@ -292,7 +276,7 @@ def prepare_for_training(lr_config, encoder_config, transformer_config, verbose=
     )
 
 
-# Instantiate our required training components in the correct scope
+# Instantiate our required training components
 (
     loss_fn,
     optimizer,
@@ -311,7 +295,7 @@ def prepare_for_training(lr_config, encoder_config, transformer_config, verbose=
 print("\n Training preparation completed\n")
 
 # Path to checkpoints
-checkpoint_path = "gs://tpu-test-koh/DECIMER_V2/checkpoints_SMILES_TPU8/"
+checkpoint_path = "./checkpoints_SMILES_GPU/"
 ckpt = tf.train.Checkpoint(
     encoder=encoder, transformer=transformer, optimizer=optimizer
 )
@@ -357,8 +341,6 @@ def train_step(image_batch, selfies_batch):
             ),
         )
 
-    # total_loss = batch_loss / int(selfies_batch.shape[1])
-
     gradients = tape.gradient(
         batch_loss, encoder.trainable_variables + transformer.trainable_variables
     )
@@ -367,66 +349,25 @@ def train_step(image_batch, selfies_batch):
         zip(gradients, encoder.trainable_variables + transformer.trainable_variables)
     )
 
-    train_loss.update_state(batch_loss * strategy.num_replicas_in_sync)
+    train_loss.update_state(batch_loss)
 
 
 @tf.function
 def dist_train_step(image_batch, selfies_batch):
-    strategy.run(train_step, args=(image_batch, selfies_batch))
+    train_step(image_batch, selfies_batch)
 
 
-"""
-# Main validation step function
-def validation_step(image_batch, selfies_batch):
-
-    selfies_batch_input = selfies_batch[:, :-1]
-    selfies_batch_target = selfies_batch[:, 1:]
-    combined_mask = create_mask(selfies_batch_input, selfies_batch_target)
-
-    with tf.GradientTape() as tape:
-        image_embedding = encoder(image_batch, training=True)
-        prediction_batch, _ = transformer(
-            image_embedding,
-            selfies_batch_input,
-            training=True,
-            look_ahead_mask=combined_mask,
-        )
-
-        # Update Loss Accumulator
-        batch_loss = loss_fn(selfies_batch_target, prediction_batch) / (MAX_LEN - 1)
-        validation_accuracy.update_state(selfies_batch_target, prediction_batch,sample_weight=tf.where(tf.not_equal(selfies_batch_target, PAD_TOKEN), 1.0, 0.0))
-
-    total_loss = batch_loss / int(selfies_batch.shape[1])
-
-    gradients = tape.gradient(
-        batch_loss, encoder.trainable_variables + transformer.trainable_variables
-    )
-    gradients, _ = tf.clip_by_global_norm(gradients, 10.0)
-    optimizer.apply_gradients(
-        zip(gradients, encoder.trainable_variables + transformer.trainable_variables)
-    )
-
-    train_loss.update_state(batch_loss * strategy.num_replicas_in_sync)
-
-
-@tf.function
-def dist_validation_step(image_batch, selfies_batch):
-    strategy.run(
-        validation_step, args=(image_batch, selfies_batch)
-    )
-"""
 loss_plot = []
 accuracy_plot = []
 val_loss_plot = []
 val_acc = []
-f = open("Training_SMILES_TPU8__.txt", "w")
+f = open("Training_SMILES_GPU.txt", "w")
 sys.stdout = f
 
 # Training loop
 for epoch in range(start_epoch, EPOCHS):
     start = time.time()
     batch = 0
-    validation_batch = 0
 
     for x in train_dataset:
         img_tensor, target = x
@@ -460,52 +401,27 @@ for epoch in range(start_epoch, EPOCHS):
                 "Time taken for 1 epoch {} sec\n".format(time.time() - start),
                 flush=True,
             )
-            # transformer.save_weights('Epoch_'+str(epoch+1)+'_weights.h5')
-
             break
-    """
-    for y in validation_dataset:
-        start_val = time.time()
-        img_tensor, target =y
-        validation_step(y)
-        validation_batch +=1
 
-        if validation_batch == validation_steps:
-
-            print ('Validation_Loss {:.4f} Accuracy {:.4f}'.format(validation_loss.result(), validation_accuracy.result()), flush=True)
-            print (datetime.now().strftime('%Y/%m/%d %H:%M:%S'),'Time taken for validation {} sec\n'.format(time.time() - start_val), flush=True)
-            val_loss_plot.append(validation_loss.result().numpy())
-            val_acc.append(validation_accuracy.result().numpy())
-            break
-    """
     train_loss.reset_states()
     train_accuracy.reset_states()
-    # validation_loss.reset_states()
-    # validation_accuracy.reset_states()
-
-    # epoch = (epoch+1)
-    # batch = 0
 
 plt.plot(loss_plot, "-o", label="Training loss")
-# plt.plot(val_loss_plot , '-o', label= "Validation loss")
-plt.title("Training and Validation Loss")
+plt.title("Training Loss")
 plt.xlabel("Epochs")
 plt.ylabel("Loss")
 plt.legend(ncol=2, loc="upper right")
-# plt.show()
 plt.gcf().set_size_inches(20, 20)
-plt.savefig("Lossplot_SMILESTPU8.jpg")
+plt.savefig("Lossplot_SMILES_GPU.jpg")
 plt.close()
 
 plt.plot(accuracy_plot, "-o", label="Training accuracy")
-# plt.plot(val_acc , '-o', label= "Validation accuracy")
-plt.title("Training and Validation accuracy")
+plt.title("Training Accuracy")
 plt.xlabel("Epochs")
-plt.ylabel("Loss")
+plt.ylabel("Accuracy")
 plt.legend(ncol=2, loc="lower right")
-# plt.show()
 plt.gcf().set_size_inches(20, 20)
-plt.savefig("accuracyplot_SMILESTPU8.jpg")
+plt.savefig("accuracyplot_SMILES_GPU.jpg")
 plt.close()
 
 print(datetime.now().strftime("%Y/%m/%d %H:%M:%S"), "Network Completed", flush=True)
