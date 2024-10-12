@@ -81,13 +81,18 @@ python trainer.py --data ./example_data --save_folder ./mymodel --initial_epochs
 
 
 #### Training Transformation
-1 pip install requirement
-2 apt-get update && apt-get install -y libgl1-mesa-glx libmagic1
-3 create tfrecord from images
+- docker run --gpus all -it --rm -v ./models/classification:/home tensorflow/tensorflow:2.13.0-gpu
+- pip install -r requirement_train.txt
+- apt-get update && apt-get install -y libgl1-mesa-glx libmagic1
+- gdown https://drive.google.com/uc?id=1SaCURxgqb0O6D9KnDgX4PrDDjf5mLTXv -O /root/.data/DECIMER-V2/DECIMER_model.zip
+- create tfrecord from images
+- gdown https://drive.google.com/uc?id=1TZQtVsYn6R5kWtAZ_g3EDAL-i1tFIjxY -O /root/.data/DECIMER-V2/DECIMER_HandDrawn_model.zip
+- unzip /root/.data/DECIMER-V2/DECIMER_model.zip -d /root/.data/DECIMER-V2/
+- unzip /root/.data/DECIMER-V2/DECIMER_HandDrawn_model.zip -d /root/.data/DECIMER-V2/
 ```
 python decimer_transformation/Utils/Create_TFrecord_From_images.py --smile_path ./example_data/smiles.txt --base_image_path ./example_data/
 ```
-4.run training file
+- run training file
 ```
 python -m decimer_transformation.DECIMER_EfficinetNetV2_Transfomer_Trainer
 ```
