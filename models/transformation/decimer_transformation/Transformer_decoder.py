@@ -103,11 +103,12 @@ class MultiHeadAttention(tf.keras.layers.Layer):
         q = self.wq(q)
         k = self.wk(k)
         v = self.wv(v)
-
-        if q_pos is not None:
-            q = q + q_pos
-        if k_pos is not None:
-            k = k + k_pos
+        
+        # ! remove the positional encoding in multihead attention
+        # if q_pos is not None:
+        #     q = q + q_pos
+        # if k_pos is not None:
+        #     k = k + k_pos
 
         q = self.split_heads(q, batch_size)
         k = self.split_heads(k, batch_size)
@@ -194,13 +195,15 @@ class Decoder(tf.keras.Model):
         dec_pos = self.pos_encoding_1d[:, :seq_len, :]
         x = self.embedding(x)  # (batch_size, target_seq_len, d_model)
         x *= tf.math.sqrt(tf.cast(self.d_model, TARGET_DTYPE))
+        x += dec_pos # ! add positional encoding
 
         for i in range(self.num_layers):
+
             x, block1, block2 = self.dec_layers[i](
                 x,
                 enc_output,
-                self.pos_encoding_2d,
-                dec_pos,
+                self.pos_encoding_2d, # ! not used
+                dec_pos, # ! not used
                 training,
                 look_ahead_mask,
                 padding_mask,
