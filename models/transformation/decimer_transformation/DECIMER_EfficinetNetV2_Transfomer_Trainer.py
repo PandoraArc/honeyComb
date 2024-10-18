@@ -44,7 +44,7 @@ D_MODEL = IMG_EMB_DEPTH
 
 # Set Training Epochs
 EPOCHS = 40
-REPLICA_BATCH_SIZE = 2
+REPLICA_BATCH_SIZE = 1 #! default 64
 BATCH_SIZE = REPLICA_BATCH_SIZE
 print(BATCH_SIZE)
 BUFFER_SIZE = 10000
@@ -53,10 +53,10 @@ TRAIN_STEPS = total_data // BATCH_SIZE
 validation_steps = 15360 // BATCH_SIZE
 
 # Parameters to train the network
-N_LAYERS = 4
-D_MODEL = 512
+N_LAYERS = 1 #! default 4
+D_MODEL = 256 #! default 512
 D_FF = 2048
-N_HEADS = 8
+N_HEADS = 2 #! default 8
 DROPOUT_RATE = 0.1
 
 # ENCODER_CONFIG
@@ -252,8 +252,8 @@ def prepare_for_training(lr_config, encoder_config, transformer_config, verbose=
     # Instantiate the decoder model
     transformer = Transformer_decoder.Decoder(**transformer_config)
     transformer(
-        initialization_batch,
         tf.random.uniform((REPLICA_BATCH_SIZE, 1)),
+        initialization_batch,
         training=False,
     )
 
