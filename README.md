@@ -81,8 +81,8 @@ python trainer.py --data ./example_data --save_folder ./mymodel --initial_epochs
 
 
 #### Training Transformation
-- docker run --gpus all -it --rm -v ./models/classification:/home tensorflow/tensorflow:2.13.0-gpu
-- pip install -r requirement_train.txt
+- docker run --gpus all -it --rm -v .:/home tensorflow/tensorflow:2.12.0-gpu
+- pip install -r requirements_train.txt
 - apt-get update && apt-get install -y libgl1-mesa-glx libmagic1
 - gdown https://drive.google.com/uc?id=1SaCURxgqb0O6D9KnDgX4PrDDjf5mLTXv -O /root/.data/DECIMER-V2/DECIMER_model.zip
 - create tfrecord from images
