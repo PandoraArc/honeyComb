@@ -101,25 +101,29 @@ apt-get update && apt-get install -y libgl1-mesa-glx libmagic1
 pip install -r requirements_train.txt
 ```
 
-5. download pretrianed model
+5. create directory for pre-trained model
+```
+mkdir -p /root/.data/DECIMER-V2
+```
+
+6. download pretrianed model
 ```
 gdown https://drive.google.com/uc?id=1SaCURxgqb0O6D9KnDgX4PrDDjf5mLTXv -O /root/.data/DECIMER-V2/DECIMER_model.zip
-
 gdown https://drive.google.com/uc?id=1TZQtVsYn6R5kWtAZ_g3EDAL-i1tFIjxY -O /root/.data/DECIMER-V2/DECIMER_HandDrawn_model.zip
 ```
 
-6. Unzip file model
+7. Unzip file model
 ```
 unzip /root/.data/DECIMER-V2/DECIMER_model.zip -d /root/.data/DECIMER-V2/
 unzip /root/.data/DECIMER-V2/DECIMER_HandDrawn_model.zip -d /root/.data/DECIMER-V2/
 ```
 
-7. Prepare data for training by creating tfrecord
+8. Prepare data for training by creating tfrecord
 ```
 python decimer_transformation/Utils/Create_TFrecord_From_images.py --smile_path ./example_data/smiles.txt --base_image_path ./example_data/
 ```
 
-8. run training file
+9. run training file
 ```
 python -m decimer_transformation.DECIMER_EfficinetNetV2_Transfomer_Trainer
 ```
