@@ -14,7 +14,7 @@ import tensorflow as tf
 import decimer_transformation.Transformer_decoder as Transformer_decoder
 
 # Load the Data
-total_data = 1000000  # datasize integer
+total_data = 2  # datasize integer
 
 # load the tokenizer and max_length
 gdown.download(
@@ -47,7 +47,7 @@ EPOCHS = 40
 REPLICA_BATCH_SIZE = 1 #! default 64
 BATCH_SIZE = REPLICA_BATCH_SIZE
 print(BATCH_SIZE)
-BUFFER_SIZE = 10000
+BUFFER_SIZE = 1 #! default 10000
 target_vocab_size = max_length
 TRAIN_STEPS = total_data // BATCH_SIZE
 validation_steps = 15360 // BATCH_SIZE
@@ -158,7 +158,7 @@ def get_dataset(batch_size=BATCH_SIZE, buffered_size=BUFFER_SIZE, path=""):
     train_dataset = (
         dataset_img.with_options(options)
         .map(read_tfrecord, num_parallel_calls=AUTO)
-        .repeat()
+        # .repeat() # ! it creates an infinite loop
         .shuffle(buffered_size)
         .batch(batch_size, drop_remainder=True)
         .prefetch(buffer_size=AUTO)
@@ -352,11 +352,6 @@ def train_step(image_batch, selfies_batch):
     train_loss.update_state(batch_loss)
 
 
-@tf.function
-def dist_train_step(image_batch, selfies_batch):
-    train_step(image_batch, selfies_batch)
-
-
 loss_plot = []
 accuracy_plot = []
 val_loss_plot = []
@@ -371,7 +366,7 @@ for epoch in range(start_epoch, EPOCHS):
 
     for x in train_dataset:
         img_tensor, target = x
-        dist_train_step(img_tensor, target)
+        train_step(img_tensor, target)
         batch += 1
 
         if batch % 100 == 0:
