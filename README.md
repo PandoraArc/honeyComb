@@ -67,7 +67,7 @@ docker run --gpus all -it --rm -v ./models/classification:/home tensorflow/tenso
 cd /home
 ```
 
-3.install requirement
+3. install requirement
 ```
 pip install -r requirements_train.txt
 ```
@@ -84,40 +84,42 @@ python trainer.py --data ./example_data --save_folder ./mymodel --initial_epochs
 1. run docker tensorflow 2.13.0-gpu (or 2.13.0 if using only CPU) with interaction mode
 ```
 docker run --gpus all -it --rm -v ./models/transformation:/home tensorflow/tensorflow:2.13.0-gpu
+```
 
 2. change location to /home in container
 ```
 cd /home
 ```
 
-3.install required lib
+3. install required lib
 ```
 apt-get update && apt-get install -y libgl1-mesa-glx libmagic1
 ```
 
-4.install requirement
+4. install requirement
 ```
 pip install -r requirements_train.txt
 ```
 
-5.download pretrianed model
+5. download pretrianed model
 ```
 gdown https://drive.google.com/uc?id=1SaCURxgqb0O6D9KnDgX4PrDDjf5mLTXv -O /root/.data/DECIMER-V2/DECIMER_model.zip
+
 gdown https://drive.google.com/uc?id=1TZQtVsYn6R5kWtAZ_g3EDAL-i1tFIjxY -O /root/.data/DECIMER-V2/DECIMER_HandDrawn_model.zip
 ```
 
-6.Unzip file model
+6. Unzip file model
 ```
 unzip /root/.data/DECIMER-V2/DECIMER_model.zip -d /root/.data/DECIMER-V2/
 unzip /root/.data/DECIMER-V2/DECIMER_HandDrawn_model.zip -d /root/.data/DECIMER-V2/
 ```
 
-7.Prepare data for training by creating tfrecord
+7. Prepare data for training by creating tfrecord
 ```
 python decimer_transformation/Utils/Create_TFrecord_From_images.py --smile_path ./example_data/smiles.txt --base_image_path ./example_data/
 ```
 
-8run training file
+8. run training file
 ```
 python -m decimer_transformation.DECIMER_EfficinetNetV2_Transfomer_Trainer
 ```
