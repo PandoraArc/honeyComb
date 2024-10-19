@@ -324,7 +324,7 @@ def train_step(image_batch, selfies_batch):
 
     with tf.GradientTape() as tape:
         image_embedding = encoder(image_batch, training=True)
-        prediction_batch, _ = transformer(
+        prediction_batch = transformer(
             selfies_batch_input,
             image_embedding,
             training=True,
