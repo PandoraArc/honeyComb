@@ -1,0 +1,11 @@
+efficientnet==1.1.1
+opencv-python==4.10.0.84
+pillow-heif==0.17.0
+pystow==0.5.4
+tensorflow>=2.8.0,<=2.15.0
+python-magic==0.4.15
+minio==7.2.7
+pyyaml==6.0.2
+python-multipart==0.0.9
+gdown==5.2.0
+matplotlib==3.7.5
