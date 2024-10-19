@@ -318,15 +318,15 @@ def train_step(image_batch, selfies_batch):
 
     selfies_batch_input = selfies_batch[:, :-1]
     selfies_batch_target = selfies_batch[:, 1:]
-    combined_mask = Transformer_decoder.create_mask(
-        selfies_batch_input, selfies_batch_target
+    combined_mask = Transformer_decoder.create_masks_decoder(
+        selfies_batch_input
     )
 
     with tf.GradientTape() as tape:
         image_embedding = encoder(image_batch, training=True)
         prediction_batch, _ = transformer(
-            image_embedding,
             selfies_batch_input,
+            image_embedding,
             training=True,
             look_ahead_mask=combined_mask,
         )
