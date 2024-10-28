@@ -24,6 +24,7 @@ function useApp() {
                     classification_date: item[4]?.split(","),
                     transformation_path: item[5]?.split(","),
                     transformation_date: item[6]?.split(","),
+                    error: item[7]
                 });
             });
             setSession(data);
@@ -35,7 +36,8 @@ function useApp() {
         let obj = {
             title: item.session_id,
             origin: item.original_image_path,
-            data: []
+            data: [],
+            error: item.error
         }
         for (let i = 0; i < item.segmentation_path.length; i++) {
            let file = {
@@ -45,7 +47,6 @@ function useApp() {
            }
            obj.data.push(file)
         }
-        console.log(obj)
 
         setSelectedItem(obj)
         setModalVisible(true)
