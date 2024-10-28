@@ -67,6 +67,10 @@ async def predict(file: UploadFile = File(...)):
             "created_at": str(datetime.now(timezone.utc).isoformat()),
             "SMILES": modified_smiles
         }
+        
+        if len(modified_smiles) > 280:
+            raise HTTPException(status_code=400, detail="SMILES string is too long")
+        
         file_ext = os.path.splitext(file.filename)[1]
         timestamp = datetime.now(timezone.utc).strftime('%Y%m%dT%H%M%S')
         filename = f"transformation/{timestamp}{file_ext}"

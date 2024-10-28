@@ -168,6 +168,9 @@ async def process_file(session_id: str,
 
         async with httpx.AsyncClient(timeout=300) as client:
             seg_res = await client.post("http://seg:80/seg/api/predict", files=files)
+            if seg_res.status_code != 200:
+                detail = seg_res.json().get('detail', 'Unknown error')
+                raise ValueError(f"Segmentation failed {detail}")
             seg_res = seg_res.json()
         
         seg_paths = [s.get('_object_name') for s in seg_res['segments']]
@@ -187,7 +190,8 @@ async def process_file(session_id: str,
             for path in seg_paths:
                 step = "classification"
                 picture = minio_man.get_object_content(path, decode=False)
-                cls_res = await client.post("http://cls:80/cls/api/predict", files={"file": picture})
+                _, seg_ext = os.path.splitext(path)
+                cls_res = await client.post("http://cls:80/cls/api/predict", files={"file": (f"file{seg_ext}", picture)})
                 cls_res = cls_res.json()
                 
                 is_chem = cls_res.get('is_chem')
@@ -197,7 +201,10 @@ async def process_file(session_id: str,
                 if is_chem:
                     step = "transformation"
                     logger.info(f"Transforming the image - session_id: {session_id} - segment_path: {path}")
-                    trans_res = await client.post("http://trans:80/trans/api/predict", files={"file": picture})
+                    trans_res = await client.post("http://trans:80/trans/api/predict", files={"file": (f"file{seg_ext}", picture)})
+                    if trans_res.status_code != 200:
+                        detail = trans_res.json().get('detail', 'Unknown error')
+                        raise ValueError(f"Transformation failed {detail}")
                     trans_res = trans_res.json()
                     smiles.append(trans_res.get('SMILES'))
                     trans_paths.append(trans_res.get('minio_res', {}).get('_object_name')) 
@@ -215,6 +222,8 @@ async def process_file(session_id: str,
         
         logger.info(f"Processing complete - session_id: {session_id}")
     except Exception as e:
+        obj['error'] = f"Error in {step}: {str(e)}"
+        sess_man.update_session(session_id, SessionIn(**obj))
         logger.error(f"Error in {step}: {str(e)}")
 
 

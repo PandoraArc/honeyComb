@@ -93,7 +93,7 @@ class SessionManager:
                     classification_path = '{sessionIn.classification_path}',
                     classification_data = '{sessionIn.clasification_data}',
                     transformation_path = '{sessionIn.transformation_path}',
-                    transformation_data = '{sessionIn.transformation_data}'
+                    transformation_data = '{sessionIn.transformation_data}',
                     error = '{sessionIn.error}'
                 WHERE id = {session_id}
             """
