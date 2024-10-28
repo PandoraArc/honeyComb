@@ -18,6 +18,7 @@ class SessionIn(BaseModel):
     clasification_data: Optional[str] = None
     transformation_path: Optional[str] = None
     transformation_data: Optional[str] = None
+    error: Optional[str] = None
 
 
 class SessionManager:
@@ -39,7 +40,8 @@ class SessionManager:
                 classification_path,
                 classification_data,
                 transformation_path,
-                transformation_data
+                transformation_data,
+                error
             FROM 
                 session WHERE 1
             """
@@ -62,8 +64,8 @@ class SessionManager:
         conn = sqlite3.connect(self.path)
         try:
             sql = f"""
-            INSERT INTO session (original_image_path, segmentation_path, classification_path, classification_data, transformation_path, transformation_data) 
-            VALUES ('{sessionIn.original_image_path}', '{sessionIn.segmentation_path}', '{sessionIn.classification_path}',  '{sessionIn.clasification_data}', '{sessionIn.transformation_path}', '{sessionIn.transformation_data}')
+            INSERT INTO session (original_image_path, segmentation_path, classification_path, classification_data, transformation_path, transformation_data, error) 
+            VALUES ('{sessionIn.original_image_path}', '{sessionIn.segmentation_path}', '{sessionIn.classification_path}',  '{sessionIn.clasification_data}', '{sessionIn.transformation_path}', '{sessionIn.transformation_data}', '{sessionIn.error}')
             """
             cursor = conn.cursor()
             cursor.execute(sql)
@@ -92,6 +94,7 @@ class SessionManager:
                     classification_data = '{sessionIn.clasification_data}',
                     transformation_path = '{sessionIn.transformation_path}',
                     transformation_data = '{sessionIn.transformation_data}'
+                    error = '{sessionIn.error}'
                 WHERE id = {session_id}
             """
 
