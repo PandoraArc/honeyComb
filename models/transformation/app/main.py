@@ -52,10 +52,10 @@ async def predict(file: UploadFile = File(...)):
     try:
         image_bytes = await file.read()
         smiles = predict_SMILES(io.BytesIO(image_bytes))
-        modified_smiles = smiles.replace('=', '_eq').replace("(", '_left').replace(")", "_right")
+        modified_smiles = smiles.replace('=', '_eq').replace("(", '_left').replace(")", "_right").replace("[", "_sqleft").replace("]", "_sqright")
         
         # for smiles string to original
-        # converted_smiles = modified_smiles.replace('_eq', '=').replace('_left', '(').replace('_right', ')') 
+        # converted_smiles = modified_smiles.replace('_eq', '=').replace('_left', '(').replace('_right', ')').replace('_sqleft', '[').replace('_sqright', ']')
                 
         man = MinIoManager()
         mine = magic.Magic(mime=True)
