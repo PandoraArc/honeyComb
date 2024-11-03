@@ -80,6 +80,30 @@ python trainer.py --data ./example_data --save_folder ./mymodel --initial_epochs
 - (optional) you can optimize paramaters --datam, --save_folder, --initial_epochs, --fine_tune_epochs as you wish
 
 
+#### Training Segmentation
+1. run docker tensorflow 2.13.0-gpu (or 2.13.0 if using only CPU) with interaction mode
+```
+docker run --gpus all -it --rm -v ./models/segmentation:/home tensorflow/tensorflow:2.13.0-gpu
+```
+
+2. change location to /home in container
+```
+cd /home
+```
+
+3. install required lib
+```
+apt-get update && apt-get install -y libgl1-mesa-glx libmagic1
+```
+
+4. install requirement
+```
+pip install -r requirements_train.txt
+```
+.
+.
+.
+
 #### Training Transformation
 1. run docker tensorflow 2.13.0-gpu (or 2.13.0 if using only CPU) with interaction mode
 ```
