@@ -83,26 +83,15 @@ python trainer.py --data ./example_data --save_folder ./mymodel --initial_epochs
 #### Training Segmentation
 1. run docker tensorflow 2.13.0-gpu (or 2.13.0 if using only CPU) with interaction mode
 ```
-docker run --gpus all -it --rm -v ./models/segmentation:/home tensorflow/tensorflow:2.13.0-gpu
+docker run --gpus all -p 8888:8888 --rm -v ./models/segmentation:/tf tensorflow/tensorflow:2.2.3-gpu-jupyter
 ```
+2. Open in your brower with http://localhost:8888
 
-2. change location to /home in container
-```
-cd /home
-```
+3. Go to File trainer/molecules_training.ipynb
 
-3. install required lib
-```
-apt-get update && apt-get install -y libgl1-mesa-glx libmagic1
-```
+4. Config hyperparameters
 
-4. install requirement
-```
-pip install -r requirements_train.txt
-```
-.
-.
-.
+5. Run training step by step
 
 #### Training Transformation
 1. run docker tensorflow 2.13.0-gpu (or 2.13.0 if using only CPU) with interaction mode
