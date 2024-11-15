@@ -13,6 +13,8 @@
 /models/segmentation/decimer_segmentation/__pycache__/
 /models/segmentation/decimer_segmentation/mrcnn/__pycache__
 /models/segmentation/decimer_segmentation/mask_rcnn_molecule.h5
+/models/segmentation/trainer/mrcnn/__pycache__
+/models/segmentation/trainer/mask_rcnn_coco.h5
 
 /models/classification/decimer_image_classifier/__pycache__/
 
