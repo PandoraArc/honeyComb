@@ -1,0 +1,13 @@
+numpy
+scipy
+Pillow
+cython
+matplotlib
+protobuf
+scikit-image
+keras==2.3.1
+opencv-python==4.10.0.84
+h5py
+imgaug
+gdown
+IPython[all]
