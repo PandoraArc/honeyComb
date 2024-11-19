@@ -18,29 +18,29 @@ for gpu in gpus:
     tf.config.experimental.set_memory_growth(gpu, True)
 
 # load assets
-tokenizer = pickle.load(open("tokenizer.pkl", "rb"))
-max_length = pickle.load(open("max_length.pkl", "rb"))
+tokenizer = pickle.load(open("tokenizer_SMILES.pkl", "rb"))
+max_length = pickle.load(open("max_length_SMILES.pkl", "rb"))
 
 # Image parameters
-IMG_EMB_DIM = (16, 16, 512)
+IMG_EMB_DIM = (10, 10, 512)
 IMG_EMB_DIM = (IMG_EMB_DIM[0] * IMG_EMB_DIM[1], IMG_EMB_DIM[2])
-IMG_SHAPE = (512, 512, 3)
+IMG_SHAPE = (299, 299, 3)
 PE_INPUT = IMG_EMB_DIM[0]
 IMG_SEQ_LEN, IMG_EMB_DEPTH = IMG_EMB_DIM
-D_MODEL = 512
+D_MODEL = IMG_EMB_DEPTH
 
 # Network parameters
-N_LAYERS = 6
-D_MODEL = 512
+N_LAYERS = 1 #! default 4
+D_MODEL = 256 #! default 512
 D_FF = 2048
-N_HEADS = 8
+N_HEADS = 2 #! default 8
 DROPOUT_RATE = 0.1
 
 # Misc
 MAX_LEN = max_length
 VOCAB_LEN = len(tokenizer.word_index)
 PE_OUTPUT = MAX_LEN
-TARGET_V_SIZE = VOCAB_LEN
+TARGET_V_SIZE = len(tokenizer.word_index)
 REPLICA_BATCH_SIZE = 1
 
 
@@ -64,7 +64,7 @@ testing_config.initialize_transformer_config(
     n_transformer_layers=N_LAYERS,
     transformer_d_dff=D_FF,
     transformer_n_heads=N_HEADS,
-    image_embedding_dim=D_MODEL,
+    image_embedding_dim=IMG_EMB_DIM,
 )
 
 # Prepare model
@@ -76,7 +76,7 @@ optimizer, encoder, transformer = config.prepare_models(
 )
 
 # Load trained model checkpoint
-checkpoint_path = "checkpoints"
+checkpoint_path = "checkpoints_SMILES_GPU"
 ckpt = tf.train.Checkpoint(
     encoder=encoder, transformer=transformer, optimizer=optimizer
 )

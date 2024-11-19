@@ -140,3 +140,8 @@ python decimer_transformation/Utils/Create_TFrecord_From_images.py --smile_path 
 ```
 python -m decimer_transformation.DECIMER_EfficinetNetV2_Transfomer_Trainer
 ```
+
+10.pack model 
+```
+python -m decimer_transformation.Repack_model
+```
